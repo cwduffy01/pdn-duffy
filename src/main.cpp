@@ -21,7 +21,7 @@
 #include "device/display-lights.hpp"
 #include "device/grip-lights.hpp"
 #include "device/light-manager.hpp"
-
+#include "pdn-rtos.hpp"
 
 // Core game objects
 Device* pdn = PDN::GetInstance();
@@ -40,15 +40,15 @@ Quickdraw game = Quickdraw(player, pdn, wirelessManager);
 QuickdrawWirelessManager *quickdrawWirelessManager = QuickdrawWirelessManager::GetInstance();
 RemoteDebugManager* remoteDebugManager = RemoteDebugManager::GetInstance();
 
-
-
+// Local instance of LightManager for testing
 DisplayLights displayLights(13);
 GripLights gripLights(6);
 LightManager localLightManager(displayLights, gripLights);
 
-
+// RTOS Initialization
 TaskHandle_t deviceTaskHandle = NULL;
 TaskHandle_t lightsTaskHandle = NULL;
+RingbufHandle_t buf_handle = xRingbufferCreate(1028, RINGBUF_TYPE_NOSPLIT);
 
 void deviceCallback(void *parameter) {
     for (;;) {
@@ -60,20 +60,22 @@ void deviceCallback(void *parameter) {
 }
 
 void lightsCallback(void *parameter) {
-    pinMode(21, OUTPUT);
-    pinMode(13, OUTPUT);
-
-    AnimationConfig config;
-    config.type = AnimationType::BOUNTY_WIN;
-    config.loop = true;
-    config.speed = 16;
-    config.initialState = LEDState();
-    config.loopDelayMs = 0;
-
     localLightManager.begin();
-    localLightManager.startAnimation(config);
-
     for (;;) {
+        size_t item_size;
+        void* item = xRingbufferReceive(buf_handle, &item_size, 0);
+
+        if (item != NULL && item_size == sizeof(AnimationConfig)) {
+            AnimationConfig config;
+            memcpy(&config, item, sizeof(AnimationConfig));
+
+            // start animation
+            localLightManager.startAnimation(config);
+
+            // free memory
+            vRingbufferReturnItem(buf_handle, (void *)item);
+        }
+
         localLightManager.loop();
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
@@ -121,7 +123,7 @@ void setup() {
         NULL,
         3,
         &deviceTaskHandle,
-        0
+        1
     );
 
     xTaskCreatePinnedToCore(
@@ -131,7 +133,7 @@ void setup() {
         NULL,
         3,
         &lightsTaskHandle,
-        0
+        1  // Run on CPU 1 to avoid starving IDLE0 watchdog on CPU 0
     );
 }
 

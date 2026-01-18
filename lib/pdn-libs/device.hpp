@@ -5,6 +5,7 @@
 #include "display.hpp"
 #include "button.hpp"
 #include "light-interface.hpp"
+#include "pdn-rtos.hpp"
 
 using namespace std;
 
@@ -16,9 +17,7 @@ public:
 
     virtual int begin() = 0;
 
-    virtual void loop() = 0;\
-    // TODO: Remove eventually...
-    virtual void loopLights() = 0;
+    virtual void loop() = 0;
 
     virtual void onStateChange() = 0;
 

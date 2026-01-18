@@ -70,15 +70,6 @@ void PDN::loop() {
     primary.loop();
     secondary.loop();
     serialLoop();
-    // lightManager.loop();
-}
-
-// TODO: Remove eventually...
-void PDN::loopLights() {
-    // primary.loop();
-    // secondary.loop();
-    // serialLoop();
-    lightManager.loop();
 }
 
 void PDN::onStateChange() {
@@ -123,7 +114,10 @@ int PDN::getCurrentVibrationIntensity() {
 
 // Animation control methods
 void PDN::startAnimation(AnimationConfig config) {
-    lightManager.startAnimation(config);
+    // lightManager.startAnimation(config);
+    
+    // send config information to ring buffer
+    UBaseType_t res = xRingbufferSend(buf_handle, (void*)&config, sizeof(config), pdMS_TO_TICKS(1000));
 }
 
 void PDN::stopAnimation() {
