@@ -16,7 +16,9 @@ public:
 
     virtual int begin() = 0;
 
-    virtual void loop() = 0;
+    virtual void loop() = 0;\
+    // TODO: Remove eventually...
+    virtual void loopLights() = 0;
 
     virtual void onStateChange() = 0;
 

@@ -26,6 +26,8 @@ public:
     int begin() override;
 
     void loop() override;
+    // TODO: Remove eventually...
+    void loopLights() override;
 
     void onStateChange() override;
 

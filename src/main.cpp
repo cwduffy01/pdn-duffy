@@ -35,6 +35,26 @@ Quickdraw game = Quickdraw(player, pdn, wirelessManager);
 QuickdrawWirelessManager *quickdrawWirelessManager = QuickdrawWirelessManager::GetInstance();
 RemoteDebugManager* remoteDebugManager = RemoteDebugManager::GetInstance();
 
+TaskHandle_t deviceTaskHandle = NULL;
+TaskHandle_t lightsTaskHandle = NULL;
+
+void deviceCallback(void *parameter) {
+    for (;;) {
+        pdn->loop();
+        game.loop();
+        wirelessManager->loop();
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+    }
+}
+
+void lightsCallback(void *parameter) {
+    for (;;) {
+        pdn->loopLights();
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+    }
+}
+
+
 void setup() {
     Serial.begin(115200);
     while (!Serial) delay(100);
@@ -68,12 +88,32 @@ void setup() {
         render();
     delay(3000);
     game.initialize();
+
+    xTaskCreatePinnedToCore(
+        deviceCallback,
+        "device task",
+        10000,
+        NULL,
+        3,
+        &deviceTaskHandle,
+        0
+    );
+
+    xTaskCreatePinnedToCore(
+        lightsCallback,
+        "lights task",
+        10000,
+        NULL,
+        3,
+        &lightsTaskHandle,
+        0
+    );
 }
 
 void loop() {
-    pdn->loop();
-    // EspNowManager::GetInstance()->Update();
-    // remotePlayers.Update();
-    game.loop();
-    wirelessManager->loop();
+    // pdn->loop();
+    // // EspNowManager::GetInstance()->Update();
+    // // remotePlayers.Update();
+    // game.loop();
+    // wirelessManager->loop();
 }

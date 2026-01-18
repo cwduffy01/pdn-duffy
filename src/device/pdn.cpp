@@ -70,6 +70,14 @@ void PDN::loop() {
     primary.loop();
     secondary.loop();
     serialLoop();
+    // lightManager.loop();
+}
+
+// TODO: Remove eventually...
+void PDN::loopLights() {
+    // primary.loop();
+    // secondary.loop();
+    // serialLoop();
     lightManager.loop();
 }
 
