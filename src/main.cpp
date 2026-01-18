@@ -18,6 +18,11 @@
 #include "wireless/quickdraw-wireless-manager.hpp"
 #include "wireless/remote-debug-manager.hpp"
 
+#include "device/display-lights.hpp"
+#include "device/grip-lights.hpp"
+#include "device/light-manager.hpp"
+
+
 // Core game objects
 Device* pdn = PDN::GetInstance();
 IdGenerator* idGenerator = IdGenerator::GetInstance();
@@ -35,6 +40,13 @@ Quickdraw game = Quickdraw(player, pdn, wirelessManager);
 QuickdrawWirelessManager *quickdrawWirelessManager = QuickdrawWirelessManager::GetInstance();
 RemoteDebugManager* remoteDebugManager = RemoteDebugManager::GetInstance();
 
+
+
+DisplayLights displayLights(13);
+GripLights gripLights(6);
+LightManager localLightManager(displayLights, gripLights);
+
+
 TaskHandle_t deviceTaskHandle = NULL;
 TaskHandle_t lightsTaskHandle = NULL;
 
@@ -48,8 +60,21 @@ void deviceCallback(void *parameter) {
 }
 
 void lightsCallback(void *parameter) {
+    pinMode(21, OUTPUT);
+    pinMode(13, OUTPUT);
+
+    AnimationConfig config;
+    config.type = AnimationType::BOUNTY_WIN;
+    config.loop = true;
+    config.speed = 16;
+    config.initialState = LEDState();
+    config.loopDelayMs = 0;
+
+    localLightManager.begin();
+    localLightManager.startAnimation(config);
+
     for (;;) {
-        pdn->loopLights();
+        localLightManager.loop();
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
 }
