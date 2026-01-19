@@ -115,21 +115,40 @@ int PDN::getCurrentVibrationIntensity() {
 // Animation control methods
 void PDN::startAnimation(AnimationConfig config) {
     // lightManager.startAnimation(config);
-    
-    // send config information to ring buffer
-    UBaseType_t res = xRingbufferSend(buf_handle, (void*)&config, sizeof(config), pdMS_TO_TICKS(1000));
+
+    // send start message
+    AnimationMessage msg;
+    msg.type = AnimationMessageType::START;
+    msg.config = config;
+
+    UBaseType_t res = xRingbufferSend(buf_handle, (void*)&msg, sizeof(msg), pdMS_TO_TICKS(1000));
 }
 
 void PDN::stopAnimation() {
-    lightManager.stopAnimation();
+    // lightManager.stopAnimation();
+
+    AnimationMessage msg;
+    msg.type = AnimationMessageType::STOP;
+
+    UBaseType_t res = xRingbufferSend(buf_handle, (void*)&msg, sizeof(msg), pdMS_TO_TICKS(1000));
 }
 
 void PDN::pauseAnimation() {
-    lightManager.pauseAnimation();
+    // lightManager.pauseAnimation();
+
+    AnimationMessage msg;
+    msg.type = AnimationMessageType::PAUSE;
+
+    UBaseType_t res = xRingbufferSend(buf_handle, (void*)&msg, sizeof(msg), pdMS_TO_TICKS(1000));
 }
 
 void PDN::resumeAnimation() {
-    lightManager.resumeAnimation();
+    // lightManager.resumeAnimation();
+
+    AnimationMessage msg;
+    msg.type = AnimationMessageType::RESUME;
+
+    UBaseType_t res = xRingbufferSend(buf_handle, (void*)&msg, sizeof(msg), pdMS_TO_TICKS(1000));
 }
 
 bool PDN::isAnimating() const {

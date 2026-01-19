@@ -37,6 +37,13 @@ enum class EaseCurve {
     ELASTIC
 };
 
+enum class AnimationMessageType {
+    START,
+    STOP,
+    PAUSE,
+    RESUME
+};
+
 // New struct to represent the state of all LEDs
 struct LEDState {
     struct SingleLEDState {
@@ -88,6 +95,11 @@ struct AnimationConfig {
     EaseCurve curve = EaseCurve::LINEAR;  // Default to linear curve
     LEDState initialState = LEDState();                // Initial LED state for the animation
     uint16_t loopDelayMs = 0;             // Delay between animation loops (in milliseconds)
+};
+
+struct AnimationMessage {
+    AnimationMessageType type;
+    AnimationConfig config;
 };
 
 // Interface for animations

@@ -61,19 +61,33 @@ void deviceCallback(void *parameter) {
 
 void lightsCallback(void *parameter) {
     localLightManager.begin();
+
+    size_t item_size;
+
     for (;;) {
-        size_t item_size;
-        void* item = xRingbufferReceive(buf_handle, &item_size, 0);
+        void* msg_item = xRingbufferReceive(buf_handle, &item_size, 0);
 
-        if (item != NULL && item_size == sizeof(AnimationConfig)) {
-            AnimationConfig config;
-            memcpy(&config, item, sizeof(AnimationConfig));
+        if (msg_item != NULL && item_size == sizeof(AnimationMessage)) {
 
-            // start animation
-            localLightManager.startAnimation(config);
+            AnimationMessage msg;
+            memcpy(&msg, msg_item, sizeof(AnimationMessage));
 
-            // free memory
-            vRingbufferReturnItem(buf_handle, (void *)item);
+            switch(msg.type) {
+                case AnimationMessageType::START:
+                    localLightManager.startAnimation(msg.config);
+                    break;
+                case AnimationMessageType::STOP:
+                    localLightManager.stopAnimation();
+                    break;
+                case AnimationMessageType::PAUSE:
+                    localLightManager.pauseAnimation();
+                    break;
+                case AnimationMessageType::RESUME:
+                    localLightManager.resumeAnimation();
+                    break;
+            }
+
+            vRingbufferReturnItem(buf_handle, (void *)msg_item);
         }
 
         localLightManager.loop();
@@ -81,6 +95,24 @@ void lightsCallback(void *parameter) {
     }
 }
 
+volatile bool toggle = false;
+volatile uint32_t lastInterruptTime = 0;
+const uint32_t debounceDelay = 100;
+
+void IRAM_ATTR button1ISR() {
+    uint32_t currentTime = millis();
+    if (currentTime - lastInterruptTime < debounceDelay) {
+        return;
+    }
+    lastInterruptTime = currentTime;
+
+    toggle = !toggle;
+    if (toggle) {
+        pdn->pauseAnimation();
+    } else {
+        pdn->resumeAnimation();
+    }
+}
 
 void setup() {
     Serial.begin(115200);
@@ -135,6 +167,8 @@ void setup() {
         &lightsTaskHandle,
         1  // Run on CPU 1 to avoid starving IDLE0 watchdog on CPU 0
     );
+
+    attachInterrupt(digitalPinToInterrupt(primaryButtonPin), button1ISR, FALLING);
 }
 
 void loop() {
