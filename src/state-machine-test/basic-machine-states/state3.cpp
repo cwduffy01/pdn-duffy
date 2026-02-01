@@ -31,5 +31,6 @@ void State3::onStateLoop(Device *PDN, StateMachineRtos* machine) {
 }
 
 void State3::onStateDismounted(Device *PDN) {
+    count = 0;
     ESP_LOGW(getTaskName(), "Dismounted");
 }

@@ -19,6 +19,7 @@
 #include "wireless/remote-debug-manager.hpp"
 
 #include "state-machine-test/basic-machine.hpp"
+#include "device-constants.hpp"
 
 // Core game objects
 Device* pdn = PDN::GetInstance();
@@ -38,6 +39,14 @@ BasicMachine game = BasicMachine(pdn);
 // RemotePlayerManager remotePlayers;
 QuickdrawWirelessManager *quickdrawWirelessManager = QuickdrawWirelessManager::GetInstance();
 RemoteDebugManager* remoteDebugManager = RemoteDebugManager::GetInstance();
+
+// ISR to trigger state change to 0
+void IRAM_ATTR buttonISR() {
+    ESP_LOGW("INTR", "Interrupt Triggered");
+    uint32_t state = STATE0;
+    BaseType_t higherTask = pdTRUE;
+    game.sendToQueueFromISR(&state, &higherTask);
+}
 
 void setup() {
     Serial.begin(115200);
@@ -72,6 +81,8 @@ void setup() {
         render();
     delay(3000);
     game.initialize();
+
+    attachInterrupt(digitalPinToInterrupt(secondaryButtonPin), buttonISR, RISING);
 
     game.start();
 }
