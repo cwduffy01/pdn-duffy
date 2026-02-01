@@ -26,12 +26,18 @@ public:
      * @brief Initialize and start the RTOS task and queue.
      * @return true if initialization was successful, false otherwise.
      */
-    bool start();
+    bool start(bool asSuspended = false);
 
     /**
      * @brief Stop and delete the RTOS task.
      */
     void stop();
+
+    void suspend();
+
+    void resume();
+
+    void notify(uint32_t notif_value);
 
     /**
      * @brief Check if the task is currently running.

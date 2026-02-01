@@ -18,6 +18,8 @@
 #include "wireless/quickdraw-wireless-manager.hpp"
 #include "wireless/remote-debug-manager.hpp"
 
+#include "state-machine-test/basic-machine.hpp"
+
 // Core game objects
 Device* pdn = PDN::GetInstance();
 IdGenerator* idGenerator = IdGenerator::GetInstance();
@@ -28,7 +30,9 @@ const char* WIFI_PASSWORD = "AlleyCatBountyHunting1";
 const char* BASE_URL = "http://alleycat-server.local:3000";
 
 WirelessManager* wirelessManager = new WirelessManager(pdn, WIFI_SSID, WIFI_PASSWORD, BASE_URL);
-Quickdraw game = Quickdraw(player, pdn, wirelessManager);
+// Quickdraw game = Quickdraw(player, pdn, wirelessManager);
+
+BasicMachine game = BasicMachine(pdn);
 
 // Remote player management
 // RemotePlayerManager remotePlayers;
@@ -68,12 +72,14 @@ void setup() {
         render();
     delay(3000);
     game.initialize();
+
+    game.start();
 }
 
 void loop() {
     pdn->loop();
     // EspNowManager::GetInstance()->Update();
     // remotePlayers.Update();
-    game.loop();
+    // game.loop();
     wirelessManager->loop();
 }

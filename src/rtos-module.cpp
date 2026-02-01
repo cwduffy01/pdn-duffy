@@ -12,7 +12,7 @@ RtosModule::~RtosModule()
     stop();
 }
 
-bool RtosModule::start()
+bool RtosModule::start(bool asSuspended)
 {
     // Don't start if already running
     if (_running) {
@@ -43,6 +43,12 @@ bool RtosModule::start()
     }
 
     _running = true;
+
+    if (asSuspended) {
+        vTaskSuspend(_taskHandle);
+        _running = false;
+    }
+
     return true;
 }
 
@@ -65,6 +71,16 @@ void RtosModule::stop()
         vQueueDelete(_queueHandle);
         _queueHandle = nullptr;
     }
+}
+
+void RtosModule::suspend() {
+    vTaskSuspend(_taskHandle);
+    _running = false;
+}
+
+void RtosModule::resume() {
+    vTaskResume(_taskHandle);
+    _running = true;
 }
 
 bool RtosModule::isRunning() const
