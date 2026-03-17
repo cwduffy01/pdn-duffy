@@ -107,6 +107,9 @@ void Idle::cycleStats(Device *PDN) {
     } else if(statsIndex == 5) {
         PDN->getDisplay()->setGlyphMode(FontMode::TEXT_INVERTED_SMALL)->drawText("Average",70, 20)->drawText("Reaction", 70, 35);
         PDN->getDisplay()->setGlyphMode(FontMode::TEXT_INVERTED_LARGE)->drawText(std::to_string(player->getAverageReactionTime()).c_str(), 80, 55);
+    } else if (statsIndex == 6) {
+        int glyph_size = 32;
+        PDN->getDisplay()->setGlyphMode(FontMode::SYMBOL_GLYPH)->renderGlyph(player->getSymbolGlyph(), (int)(64 + (64 - glyph_size)/2), (int)(64 - (64 - glyph_size)/2));
     }
 
     PDN->getDisplay()->render();

@@ -84,7 +84,7 @@ private:
     bool matchInitialized = false;
     bool displayIsDirty = false;
     int statsIndex = 0;
-    int statsCount = 5;
+    int statsCount = 6;
 
     bool isPrimaryRequired() override;
     bool isAuxRequired() override;
