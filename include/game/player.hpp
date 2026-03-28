@@ -4,6 +4,7 @@
 #include <string>
 #include <iostream>
 #include <cstdint>
+#include "symbol-match/symbol-manager.hpp"
 
 constexpr size_t PLAYER_ID_LENGTH = 4;
 constexpr size_t PLAYER_ID_BUFFER_SIZE = PLAYER_ID_LENGTH + 1;
@@ -13,13 +14,6 @@ enum class Allegiance {
     ENDLINE = 1,
     HELIX = 2,
     RESISTANCE = 3
-};
-
-enum class Symbol {
-    SYMBOL_A = 0,
-    SYMBOL_B,
-    SYMBOL_C,
-    NUM_SYMBOLS,    // add new symbols above this line
 };
 class Player {
 public:
