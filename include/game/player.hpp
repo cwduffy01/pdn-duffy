@@ -4,7 +4,7 @@
 #include <string>
 #include <iostream>
 #include <cstdint>
-#include "symbol-match/symbol-manager.hpp"
+#include "symbol-match/symbol.hpp"
 
 constexpr size_t PLAYER_ID_LENGTH = 4;
 constexpr size_t PLAYER_ID_BUFFER_SIZE = PLAYER_ID_LENGTH + 1;
@@ -68,9 +68,7 @@ public:
 
     int getLosses();
 
-    Symbol getSymbol();
-
-    const char* getSymbolGlyph();
+    Symbol* getSymbol();
 
     void incrementStreak();
 
@@ -85,8 +83,6 @@ public:
     void addReactionTime(unsigned long reactionTime);
 
 private:
-    void setSymbol();
-
     std::string id = "default";
     std::string name = "";
     std::string allegianceStr = "none";
@@ -107,7 +103,6 @@ private:
     Allegiance allegiance = Allegiance::RESISTANCE;
 
     Symbol symbol;
-    char* symbolGlyph;
     
     bool hunter = true;
 };
