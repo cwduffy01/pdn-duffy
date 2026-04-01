@@ -21,7 +21,7 @@ void MatchSuccess::onStateMounted(Device *FDN) {
     renderTimer.setTimer(renderInterval);
 
     // Send SYMBOL_MATCH_SUCCESS to all known peers
-    for (SerialIdentifier port : {SerialIdentifier::OUTPUT_JACK, SerialIdentifier::INPUT_JACK}) {
+    for (SerialIdentifier port : {SerialIdentifier::INPUT_JACK_SECONDARY, SerialIdentifier::INPUT_JACK}) {
         const uint8_t* peerMac = remoteDeviceCoordinator->getPeerMac(port);
         if (peerMac != nullptr) {
             symbolWirelessManager->setMacPeer(peerMac);

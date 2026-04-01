@@ -24,8 +24,8 @@ void SymbolState::onStateMounted(Device *PDN) {
     symbolSent = false;
     toggleSymbol = true;
 
-    if (remoteDeviceCoordinator->getPeerDeviceType(SerialIdentifier::OUTPUT_JACK) == DeviceType::FDN) {
-        fdnMac = const_cast<uint8_t*>(remoteDeviceCoordinator->getPeerMac(SerialIdentifier::OUTPUT_JACK));
+    if (remoteDeviceCoordinator->getPeerDeviceType(SerialIdentifier::INPUT_JACK_SECONDARY) == DeviceType::FDN) {
+        fdnMac = const_cast<uint8_t*>(remoteDeviceCoordinator->getPeerMac(SerialIdentifier::INPUT_JACK_SECONDARY));
     } else if (remoteDeviceCoordinator->getPeerDeviceType(SerialIdentifier::INPUT_JACK) == DeviceType::FDN) {
         fdnMac = const_cast<uint8_t*>(remoteDeviceCoordinator->getPeerMac(SerialIdentifier::INPUT_JACK));
     }
@@ -74,8 +74,8 @@ void SymbolState::onStateLoop(Device *PDN) {
     }
 
     // if device is not connected to an FDN, transition to idle
-    if (!(remoteDeviceCoordinator->getPeerDeviceType(SerialIdentifier::OUTPUT_JACK) == DeviceType::FDN
-        || remoteDeviceCoordinator->getPeerDeviceType(SerialIdentifier::INPUT_JACK) == DeviceType::FDN)) {
+    if (!(remoteDeviceCoordinator->getPeerDeviceType(SerialIdentifier::INPUT_JACK_SECONDARY) == DeviceType::FDN
+          || remoteDeviceCoordinator->getPeerDeviceType(SerialIdentifier::INPUT_JACK) == DeviceType::FDN)) {
         transitionToIdleState = true;
     }
 }

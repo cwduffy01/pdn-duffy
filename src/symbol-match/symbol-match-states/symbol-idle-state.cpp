@@ -35,12 +35,12 @@ void SymbolIdle::onStateMounted(Device *FDN) {
     FDN->getSecondaryButton()->setButtonPress(refreshSymbols, this, ButtonInteraction::CLICK);
 
     // Send SYMBOLS_REFRESHED to all known peers
-    for (SerialIdentifier port : {SerialIdentifier::OUTPUT_JACK, SerialIdentifier::INPUT_JACK}) {
+    for (SerialIdentifier port : {SerialIdentifier::INPUT_JACK_SECONDARY, SerialIdentifier::INPUT_JACK}) {
         const uint8_t* peerMac = remoteDeviceCoordinator->getPeerMac(port);
         if (peerMac != nullptr) {
             symbolWirelessManager->setMacPeer(peerMac);
-            if (port == SerialIdentifier::OUTPUT_JACK) {
-                // output corresponds to LEFT
+            if (port == SerialIdentifier::INPUT_JACK_SECONDARY) {
+                // secondary input (left jack) corresponds to LEFT
                 symbolWirelessManager->sendPacket(SMCommand::SEND_SYMBOL, symbolManager->getSymbol(SymbolPosition::LEFT)->getSymbolId(), port);
             } else if (port == SerialIdentifier::INPUT_JACK) {
                 // input corresponds to RIGHT
@@ -58,7 +58,7 @@ void SymbolIdle::onStateLoop(Device *FDN) {
         return;
     } 
 
-    leftConnected = remoteDeviceCoordinator->getPortStatus(SerialIdentifier::OUTPUT_JACK) == PortStatus::CONNECTED;
+    leftConnected = remoteDeviceCoordinator->getPortStatus(SerialIdentifier::INPUT_JACK_SECONDARY) == PortStatus::CONNECTED;
     rightConnected = remoteDeviceCoordinator->getPortStatus(SerialIdentifier::INPUT_JACK) == PortStatus::CONNECTED;
 
     if (!leftConnected) {
@@ -71,12 +71,12 @@ void SymbolIdle::onStateLoop(Device *FDN) {
     }
 
     if (!symbolSentLeft && leftConnected) {
-        const uint8_t* peerMac = remoteDeviceCoordinator->getPeerMac(SerialIdentifier::OUTPUT_JACK);
+        const uint8_t* peerMac = remoteDeviceCoordinator->getPeerMac(SerialIdentifier::INPUT_JACK_SECONDARY);
         if (peerMac != nullptr) {
             symbolWirelessManager->setMacPeer(peerMac);
             symbolWirelessManager->sendPacket(SMCommand::SEND_SYMBOL,
                 symbolManager->getSymbol(SymbolPosition::LEFT)->getSymbolId(),
-                SerialIdentifier::OUTPUT_JACK);
+                SerialIdentifier::INPUT_JACK_SECONDARY);
             symbolSentLeft = true;
         }
     } else if (!leftConnected) {
@@ -161,7 +161,7 @@ void SymbolIdle::onSymbolMatchCommandReceived(SymbolMatchCommand command) {
         return;
     }
 
-    if (command.serialPort == SerialIdentifier::OUTPUT_JACK) {
+    if (command.serialPort == SerialIdentifier::INPUT_JACK_SECONDARY) {
         symbolManager->setLeftMatched(true);
     } else if (command.serialPort == SerialIdentifier::INPUT_JACK) {
         symbolManager->setRightMatched(true);
