@@ -189,10 +189,7 @@ bool SymbolState::transitionToSymbolMatched() {
     return transitionToSymbolMatchedState;
 }
 
-bool SymbolState::isPrimaryRequired() {
-    return true;
-}
-
-bool SymbolState::isAuxRequired() {
+bool SymbolState::isJackRequired(SerialIdentifier jack) {
+    (void)jack;
     return true;
 }

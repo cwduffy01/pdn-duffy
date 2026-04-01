@@ -180,10 +180,7 @@ bool SymbolIdle::transitionToMatchSuccess() {
     return symbolManager->isLeftMatched() && symbolManager->isRightMatched();
 }
 
-bool SymbolIdle::isPrimaryRequired() {
-    return true;
-}
-
-bool SymbolIdle::isAuxRequired() {
+bool SymbolIdle::isJackRequired(SerialIdentifier jack) {
+    (void)jack;
     return true;
 }

@@ -59,10 +59,7 @@ void SymbolMatched::onSymbolMatchCommandReceived(SymbolMatchCommand command) {
     }
 }
 
-bool SymbolMatched::isPrimaryRequired() {
-    return true;
-}
-
-bool SymbolMatched::isAuxRequired() {
+bool SymbolMatched::isJackRequired(SerialIdentifier jack) {
+    (void)jack;
     return true;
 }

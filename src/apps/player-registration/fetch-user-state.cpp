@@ -131,9 +131,9 @@
 //     );
 // }
 
-void FetchUserDataState::showLoadingGlyphs(Device *PDN) {
-    renderLoadingScreen(PDN->getDisplay());
-}  
+// void FetchUserDataState::showLoadingGlyphs(Device *PDN) {
+//     renderLoadingScreen(PDN->getDisplay());
+// }
 
 // bool FetchUserDataState::transitionToWelcomeMessage() {
 //     return transitionToWelcomeMessageState;

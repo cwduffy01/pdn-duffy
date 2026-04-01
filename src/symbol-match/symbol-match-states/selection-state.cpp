@@ -57,10 +57,7 @@ bool Selection::transitionToIdle() {
     return transitionToIdleState;
 }
 
-bool Selection::isPrimaryRequired() {
-    return true;
-}
-
-bool Selection::isAuxRequired() {
+bool Selection::isJackRequired(SerialIdentifier jack) {
+    (void)jack;
     return true;
 }

@@ -66,10 +66,7 @@ bool MatchSuccess::transitionToSelection() {
     return transitionToSelectionState;
 }
 
-bool MatchSuccess::isPrimaryRequired() {
-    return true;
-}
-
-bool MatchSuccess::isAuxRequired() {
+bool MatchSuccess::isJackRequired(SerialIdentifier jack) {
+    (void)jack;
     return true;
 }

@@ -22,8 +22,7 @@ public:
     void onStateLoop(Device *FDN) override;
     void onStateDismounted(Device *FDN) override;
     bool transitionToIdle();
-    bool isPrimaryRequired() override;
-    bool isAuxRequired() override;
+    bool isJackRequired(SerialIdentifier jack) override;
 
 private:
     SymbolManager* symbolManager;
@@ -46,8 +45,7 @@ public:
     bool transitionToSelection();
     bool transitionToMatchSuccess();
 
-    bool isPrimaryRequired() override;
-    bool isAuxRequired() override;
+    bool isJackRequired(SerialIdentifier jack) override;
 
 private:
     void renderSymbolScreen(Device *FDN);
@@ -78,8 +76,7 @@ public:
     void onStateDismounted(Device *FDN) override;
     bool transitionToSelection();
 
-    bool isPrimaryRequired() override;
-    bool isAuxRequired() override;
+    bool isJackRequired(SerialIdentifier jack) override;
 
 private:
     SymbolManager* symbolManager;
