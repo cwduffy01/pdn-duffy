@@ -11,6 +11,10 @@ enum MainMenuStateId {
     MAIN_MENU = 0,
 };
 
+enum MainMenuStateId {
+    MAIN_MENU = 0,
+};
+
 class MainMenu : public StateMachine {
 public:
     MainMenu(Device* PDN, RemotePlayerManager* remotePlayerManager);
