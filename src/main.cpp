@@ -12,22 +12,24 @@
 #include "device/drivers/esp32-s3/esp32-s3-serial-driver.hpp"
 #include "device/drivers/esp32-s3/esp32-s3-http-client-driver.hpp"
 #include "device/drivers/esp32-s3/esp-now-driver.hpp"
-#include "device/drivers/esp32-s3/ssd1306-u8g2-driver.hpp"
+#include "device/drivers/esp32-s3/ssd1309-u8g2-driver.hpp"
 #include "device/drivers/esp32-s3/esp32-s3-prefs-driver.hpp"
 
 #include "utils/simple-timer.hpp"
 #include "game/player.hpp"
 #include "state/state-machine.hpp"
 #include "device/pdn.hpp"
-#include "game/quickdraw.hpp"
 #include "id-generator.hpp"
 #include "wireless/remote-player-manager.hpp"
-#include "game/match-manager.hpp"
+#include "wireless/fdn-connect-wireless-manager.hpp"
 #include "wireless/wireless-types.hpp"
-#include "wireless/quickdraw-wireless-manager.hpp"
-#include "wireless/remote-debug-manager.hpp"
 #include "device/drivers/peer-comms-interface.hpp"
-#include "game/quickdraw-resources.hpp"
+#include "apps/main-menu/main-menu.hpp"
+#include "apps/main-menu/main-menu-resources.hpp"
+#include "apps/idle/idle.hpp"
+#include "apps/hacking/hacking.hpp"
+#include "apps/hacking/hacked-players-manager.hpp"
+#include "fdn-constants.hpp"
 
 // WiFi configuration - injected at compile time from wifi_credentials.ini
 // See wifi_credentials.ini.example for template
@@ -43,16 +45,16 @@
 
 WifiConfig* wifiConfig = nullptr;
 
-
 // ESP32-s3 Drivers (declare as pointers, construct in setup())
 Esp32S3Clock* clockDriver = nullptr;
-SSD1306U8G2Driver* displayDriver = nullptr;
+SSD1309U8G2Driver* displayDriver = nullptr;
 Esp32S31ButtonDriver* primaryButtonDriver = nullptr;
 Esp32S31ButtonDriver* secondaryButtonDriver = nullptr;
+Esp32S31ButtonDriver* tertiaryButtonDriver = nullptr;
 WS2812BFastLEDDriver* lightDriver = nullptr;
 Esp32S3HapticsDriver* hapticsDriver = nullptr;
-Esp32s3SerialOut* serialOutDriver = nullptr;
 Esp32s3SerialIn* serialInDriver = nullptr;
+Esp32s3SerialInSecondary* serialInSecondaryDriver = nullptr;
 Esp32S3HttpClient* httpClientDriver = nullptr;
 EspNowManager* peerCommsDriver = nullptr;
 Esp32S3Logger* loggerDriver = nullptr;
@@ -60,33 +62,19 @@ Esp32S3PrefsDriver* storageDriver = nullptr;
 
 // Core game objects (declare as pointers, construct in setup())
 Device* pdn = nullptr;
-Player* player = nullptr;
+Player player = FDN_PLAYER;
 
-// Game instance
-Quickdraw* game = nullptr;
+// Managers
+RemotePlayerManager* remotePlayerManager = nullptr;
+FDNConnectWirelessManager* fdnConnectWirelessManager = nullptr;
+HackedPlayersManager* hackedPlayersManager = nullptr;
 
-// Remote player management
-QuickdrawWirelessManager* quickdrawWirelessManager = nullptr;
-RemoteDebugManager* remoteDebugManager = nullptr;
+// Apps
+MainMenu* mainMenu = nullptr;
+Idle* idleApp = nullptr;
+Hacking* hackingApp = nullptr;
 
-void setupEspNow(QuickdrawWirelessManager* quickdrawWirelessManager, RemoteDebugManager* remoteDebugManager, PeerCommsInterface* peerCommsDriver) {
-    // Register packet handlers
-    peerCommsDriver->setPacketHandler(
-        PktType::kQuickdrawCommand,
-        [](const uint8_t* src, const uint8_t* data, const size_t len, void* userArg) {
-            ((QuickdrawWirelessManager*)userArg)->processQuickdrawCommand(src, data, len);
-        },
-        quickdrawWirelessManager
-    );
-    
-    peerCommsDriver->setPacketHandler(
-        PktType::kDebugPacket,
-        [](const uint8_t* srcAddr, const uint8_t* data, const size_t len, void* userArg) {
-            ((RemoteDebugManager*)userArg)->ProcessDebugPacket(srcAddr, data, len);
-        },
-        remoteDebugManager
-    );
-}
+static constexpr unsigned long PLAYER_BROADCAST_INTERVAL_MS = 12000;
 
 void setup() {
     Serial.begin(115200);
@@ -102,29 +90,29 @@ void setup() {
     esp_log_level_set("*", ESP_LOG_VERBOSE);
 
     // Now construct remaining drivers (safe to use logging and timers now)
-    displayDriver = new SSD1306U8G2Driver(DISPLAY_DRIVER_NAME);
+    displayDriver = new SSD1309U8G2Driver(DISPLAY_DRIVER_NAME);
     primaryButtonDriver = new Esp32S31ButtonDriver(PRIMARY_BUTTON_DRIVER_NAME, primaryButtonPin);
     secondaryButtonDriver = new Esp32S31ButtonDriver(SECONDARY_BUTTON_DRIVER_NAME, secondaryButtonPin);
+    tertiaryButtonDriver = new Esp32S31ButtonDriver(TERTIARY_BUTTON_DRIVER_NAME, tertiaryButtonPin);
     lightDriver = new WS2812BFastLEDDriver(LIGHT_DRIVER_NAME);
     hapticsDriver = new Esp32S3HapticsDriver(HAPTICS_DRIVER_NAME, motorPin);
-    serialOutDriver = new Esp32s3SerialOut(SERIAL_OUT_DRIVER_NAME);
     serialInDriver = new Esp32s3SerialIn(SERIAL_IN_DRIVER_NAME);
+    serialInSecondaryDriver = new Esp32s3SerialInSecondary(SERIAL_IN_SECONDARY_DRIVER_NAME);
     
-    // WiFi credentials are compile-time constants from build flags
     wifiConfig = new WifiConfig(WIFI_SSID, WIFI_PASSWORD, BASE_URL);
     peerCommsDriver = EspNowManager::CreateEspNowManager(PEER_COMMS_DRIVER_NAME);
     httpClientDriver = new Esp32S3HttpClient(HTTP_CLIENT_DRIVER_NAME, wifiConfig);
     storageDriver = new Esp32S3PrefsDriver(STORAGE_DRIVER_NAME, PREF_NAMESPACE);
 
-    // Create driver configuration
     DriverConfig pdnConfig = {
         {DISPLAY_DRIVER_NAME, displayDriver},
         {PRIMARY_BUTTON_DRIVER_NAME, primaryButtonDriver},
         {SECONDARY_BUTTON_DRIVER_NAME, secondaryButtonDriver},
+        {TERTIARY_BUTTON_DRIVER_NAME, tertiaryButtonDriver},
         {LIGHT_DRIVER_NAME, lightDriver},
         {HAPTICS_DRIVER_NAME, hapticsDriver},
-        {SERIAL_OUT_DRIVER_NAME, serialOutDriver},
         {SERIAL_IN_DRIVER_NAME, serialInDriver},
+        {SERIAL_IN_SECONDARY_DRIVER_NAME, serialInSecondaryDriver},
         {HTTP_CLIENT_DRIVER_NAME, httpClientDriver},
         {PEER_COMMS_DRIVER_NAME, peerCommsDriver},
         {PLATFORM_CLOCK_DRIVER_NAME, clockDriver},
@@ -132,42 +120,65 @@ void setup() {
         {STORAGE_DRIVER_NAME, storageDriver},
     };
 
-    // Create core game objects
     pdn = PDN::createPDN(pdnConfig);
-    
-    IdGenerator::initialize(clockDriver->milliseconds());
-    player = new Player();
-    player->setUserID(IdGenerator::getInstance().generateId());
-    pdn->begin();
-    
-    // Create wireless managers
-    LOG_I("SETUP", "Creating QuickdrawWirelessManager...");
-    quickdrawWirelessManager = new QuickdrawWirelessManager();
-    LOG_I("SETUP", "Creating RemoteDebugManager...");
-    remoteDebugManager = new RemoteDebugManager(peerCommsDriver);
-    
-    // WiFi credentials are compile-time constants from build flags
-    remoteDebugManager->Initialize(WIFI_SSID, WIFI_PASSWORD, BASE_URL);
 
-    quickdrawWirelessManager->initialize(player, pdn->getWirelessManager(), 1000);
-    
+    IdGenerator::initialize(clockDriver->milliseconds());
+    pdn->begin();
+
+    // Construct managers after pdn->begin()
+    remotePlayerManager = new RemotePlayerManager(peerCommsDriver);
+    remotePlayerManager->StartBroadcastingPlayerInfo(&player, PLAYER_BROADCAST_INTERVAL_MS);
+
+    fdnConnectWirelessManager = new FDNConnectWirelessManager();
+    fdnConnectWirelessManager->initialize(pdn->getWirelessManager());
+
+    hackedPlayersManager = new HackedPlayersManager(pdn->getStorage());
+
     // Register ESP-NOW packet handlers
-    setupEspNow(quickdrawWirelessManager, remoteDebugManager, peerCommsDriver);
-    
-    game = new Quickdraw(player, pdn, quickdrawWirelessManager, remoteDebugManager);
-    
-    pdn->getDisplay()->
-    invalidateScreen()->
-        drawImage(getImageForAllegiance(Allegiance::ALLEYCAT, ImageType::LOGO_LEFT))->
-        drawImage(getImageForAllegiance(Allegiance::ALLEYCAT, ImageType::STAMP))->
-        render();
+    peerCommsDriver->setPacketHandler(
+        PktType::kPlayerInfoBroadcast,
+        [](const uint8_t* src, const uint8_t* data, const size_t len, void* userArg) {
+            static_cast<RemotePlayerManager*>(userArg)->ProcessPlayerInfoPkt(src, data, len);
+        },
+        remotePlayerManager
+    );
+
+    peerCommsDriver->setPacketHandler(
+        PktType::kFdnConnect,
+        [](const uint8_t* src, const uint8_t* data, const size_t len, void* userArg) {
+            static_cast<FDNConnectWirelessManager*>(userArg)->processPacket(src, data, len);
+        },
+        fdnConnectWirelessManager
+    );
+
+    // Construct apps
+    idleApp = new Idle(
+        remotePlayerManager,
+        hackedPlayersManager,
+        fdnConnectWirelessManager,
+        pdn->getRemoteDeviceCoordinator()
+    );
+
+    mainMenu = new MainMenu(pdn, remotePlayerManager);
+
+    hackingApp = new Hacking(
+        fdnConnectWirelessManager,
+        hackedPlayersManager,
+        pdn->getRemoteDeviceCoordinator()
+    );
+
+    pdn->getDisplay()
+        ->invalidateScreen()
+        ->drawImage(alleycatLogoImage)
+        ->render();
     delay(3000);
 
-    // Register state machines with the device and launch Quickdraw
     AppConfig apps = {
-        {StateId(QUICKDRAW_APP_ID), game}
+        {StateId(IDLE_APP_ID),       idleApp},
+        {StateId(MAIN_MENU_APP_ID),  mainMenu},
+        {StateId(HACKING_APP_ID),    hackingApp},
     };
-    pdn->loadAppConfig(apps, StateId(QUICKDRAW_APP_ID));
+    pdn->loadAppConfig(apps, StateId(IDLE_APP_ID));
 }
 
 void loop() {

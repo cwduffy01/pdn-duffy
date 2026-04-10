@@ -29,8 +29,8 @@
 // Core
 #include "device/pdn.hpp"
 #include "game/player.hpp"
-#include "game/quickdraw.hpp"
-#include "wireless/quickdraw-wireless-manager.hpp"
+// #include "game/quickdraw.hpp" // QUICKDRAW_REMOVED
+// #include "wireless/quickdraw-wireless-manager.hpp" // QUICKDRAW_REMOVED
 
 // Global running flag for signal handling
 std::atomic<bool> running{true};
@@ -49,8 +49,8 @@ struct DeviceInstance {
     NativeButtonDriver* secondaryButtonDriver;
     NativeLightStripDriver* lightDriver;
     NativeHapticsDriver* hapticsDriver;
-    NativeSerialDriver* serialOutDriver;
     NativeSerialDriver* serialInDriver;
+    NativeSerialDriver* serialInSecondaryDriver;
     NativeHttpClientDriver* httpClientDriver;
     NativePeerCommsDriver* peerCommsDriver;
     NativePrefsDriver* storageDriver;
@@ -58,8 +58,8 @@ struct DeviceInstance {
     // Game objects
     PDN* pdn;
     Player* player;
-    Quickdraw* game;
-    QuickdrawWirelessManager* wirelessManager;
+    // Quickdraw* game; // QUICKDRAW_REMOVED
+    // QuickdrawWirelessManager* wirelessManager; // QUICKDRAW_REMOVED
 };
 
 DeviceInstance createDeviceInstance(int deviceIndex) {
@@ -75,8 +75,8 @@ DeviceInstance createDeviceInstance(int deviceIndex) {
     instance.secondaryButtonDriver = new NativeButtonDriver(SECONDARY_BUTTON_DRIVER_NAME + suffix, 1);
     instance.lightDriver = new NativeLightStripDriver(LIGHT_DRIVER_NAME + suffix);
     instance.hapticsDriver = new NativeHapticsDriver(HAPTICS_DRIVER_NAME + suffix, 0);
-    instance.serialOutDriver = new NativeSerialDriver(SERIAL_OUT_DRIVER_NAME + suffix);
     instance.serialInDriver = new NativeSerialDriver(SERIAL_IN_DRIVER_NAME + suffix);
+    instance.serialInSecondaryDriver = new NativeSerialDriver(SERIAL_IN_SECONDARY_DRIVER_NAME + suffix);
     instance.httpClientDriver = new NativeHttpClientDriver(HTTP_CLIENT_DRIVER_NAME + suffix);
     instance.peerCommsDriver = new NativePeerCommsDriver(PEER_COMMS_DRIVER_NAME + suffix);
     instance.storageDriver = new NativePrefsDriver(STORAGE_DRIVER_NAME + suffix);
@@ -88,8 +88,8 @@ DeviceInstance createDeviceInstance(int deviceIndex) {
         {SECONDARY_BUTTON_DRIVER_NAME, instance.secondaryButtonDriver},
         {LIGHT_DRIVER_NAME, instance.lightDriver},
         {HAPTICS_DRIVER_NAME, instance.hapticsDriver},
-        {SERIAL_OUT_DRIVER_NAME, instance.serialOutDriver},
         {SERIAL_IN_DRIVER_NAME, instance.serialInDriver},
+        {SERIAL_IN_SECONDARY_DRIVER_NAME, instance.serialInSecondaryDriver},
         {HTTP_CLIENT_DRIVER_NAME, instance.httpClientDriver},
         {PEER_COMMS_DRIVER_NAME, instance.peerCommsDriver},
         {PLATFORM_CLOCK_DRIVER_NAME, instance.clockDriver},
@@ -103,19 +103,7 @@ DeviceInstance createDeviceInstance(int deviceIndex) {
     instance.player->setUserID(IdGenerator::getInstance().generateId());
     instance.pdn->begin();
     
-    // Create wireless manager for this device
-    // Note: QuickdrawWirelessManager is a singleton, so we skip it for now
-    // In a full implementation, we'd need per-device wireless managers
-    instance.wirelessManager = nullptr;
-    
-    // Create game
-    instance.game = new Quickdraw(instance.player, instance.pdn, instance.wirelessManager, nullptr);
-
-    // Register state machines with the device and launch Quickdraw
-    AppConfig apps = {
-        {StateId(QUICKDRAW_APP_ID), instance.game}
-    };
-    instance.pdn->loadAppConfig(apps, StateId(QUICKDRAW_APP_ID));
+    // QUICKDRAW_REMOVED: game and wirelessManager instantiation removed
     
     return instance;
 }
@@ -162,14 +150,14 @@ int main(int argc, char** argv) {
     // Create device instances
     std::vector<DeviceInstance> devices;
     std::vector<PDN*> pdnPtrs;
-    std::vector<Quickdraw*> gamePtrs;
+    // std::vector<Quickdraw*> gamePtrs; // QUICKDRAW_REMOVED
     std::vector<NativeLightStripDriver*> lightPtrs;
     std::vector<NativePeerCommsDriver*> peerPtrs;
     
     for (int i = 0; i < numDevices; i++) {
         devices.push_back(createDeviceInstance(i));
         pdnPtrs.push_back(devices[i].pdn);
-        gamePtrs.push_back(devices[i].game);
+        // gamePtrs.push_back(devices[i].game); // QUICKDRAW_REMOVED
         lightPtrs.push_back(devices[i].lightDriver);
         peerPtrs.push_back(devices[i].peerCommsDriver);
     }
@@ -228,7 +216,7 @@ int main(int argc, char** argv) {
         }
         
         // Render dashboard
-        dashboard.render(pdnPtrs, gamePtrs, lightPtrs, peerPtrs);
+        dashboard.render(pdnPtrs, {}, lightPtrs, peerPtrs);
         
         // Sleep to maintain ~30 FPS update rate
         std::this_thread::sleep_for(std::chrono::milliseconds(33));
@@ -246,7 +234,7 @@ int main(int argc, char** argv) {
     
     // Clean up devices
     for (auto& device : devices) {
-        delete device.game;
+        // delete device.game; // QUICKDRAW_REMOVED
         delete device.player;
         delete device.pdn;
     }
