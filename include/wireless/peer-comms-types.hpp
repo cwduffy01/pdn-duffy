@@ -9,6 +9,7 @@ enum class PktType : uint8_t
     kQuickdrawCommand = 1,
     kDebugPacket = 2,
     kHandshakeCommand = 3,
+    kSymbolMatchCommand = 4,
     kNumPacketTypes //Not a real packet type, DO NOT USE
 };
 

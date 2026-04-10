@@ -10,6 +10,7 @@
 #include "device/drivers/http-client-interface.hpp"
 #include "device/drivers/storage-interface.hpp"
 #include "wireless/remote-debug-manager.hpp"
+#include "wireless/symbol-wireless-manager.hpp"
 
 constexpr size_t MATCH_SIZE = sizeof(Match);
 
@@ -17,7 +18,7 @@ constexpr int QUICKDRAW_APP_ID = 1;
 
 class Quickdraw : public StateMachine {
 public:
-    Quickdraw(Player *player, Device *PDN, QuickdrawWirelessManager* quickdrawWirelessManager, RemoteDebugManager* remoteDebugManager);
+    Quickdraw(Player *player, Device *PDN, QuickdrawWirelessManager* quickdrawWirelessManager, RemoteDebugManager* remoteDebugManager, SymbolWirelessManager* symbolWirelessManager);
     ~Quickdraw();
 
     void populateStateMap() override;
@@ -32,5 +33,6 @@ private:
     PeerCommsInterface* peerComms;
     RemoteDeviceCoordinator* remoteDeviceCoordinator;
     QuickdrawWirelessManager* quickdrawWirelessManager;
+    SymbolWirelessManager* symbolWirelessManager;
     RemoteDebugManager* remoteDebugManager;
 };
