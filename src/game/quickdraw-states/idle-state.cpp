@@ -4,11 +4,12 @@
 #include "game/quickdraw.hpp"
 #include "game/quickdraw-resources.hpp"
 #include "game/match-manager.hpp"
-#include "device/drivers/logger.hpp"
 #include "symbol-match/symbol-manager.hpp"
 #include "symbol-match/symbol-match.hpp"
-#include "wireless/mac-functions.hpp"
 #include "state/connect-state.hpp"
+#include "device/drivers/logger.hpp"
+
+static const char* TAG = "Idle";
 
 Idle::Idle(Player* player, MatchManager* matchManager, RemoteDeviceCoordinator* remoteDeviceCoordinator) : ConnectState(remoteDeviceCoordinator, IDLE) {
     this->matchManager = matchManager;
@@ -21,6 +22,7 @@ Idle::~Idle() {
 }
 
 void Idle::onStateMounted(Device *PDN) {
+    LOG_W(TAG, "mounted");
 
     // Switch to ESP-NOW mode for peer-to-peer communication
     PDN->getWirelessManager()->enablePeerCommsMode();
@@ -72,10 +74,11 @@ void Idle::onStateLoop(Device *PDN) {
                 }
             }
         }
-        else if (getPeerDeviceType(SerialIdentifier::OUTPUT_JACK) == DeviceType::FDN 
-                || getPeerDeviceType(SerialIdentifier::INPUT_JACK) == DeviceType::FDN) {
-            transitionToSymbolState = true;
-        }
+    }
+
+    if (getPeerDeviceType(SerialIdentifier::OUTPUT_JACK) == DeviceType::FDN
+            || getPeerDeviceType(SerialIdentifier::INPUT_JACK) == DeviceType::FDN) {
+        transitionToSymbolState = true;
     }
 
     if(matchInitializationTimer.expired()) {
@@ -85,6 +88,7 @@ void Idle::onStateLoop(Device *PDN) {
 }
 
 void Idle::onStateDismounted(Device *PDN) {
+    LOG_W(TAG, "dismounted");
     statsIndex = 0;
     matchInitializationTimer.invalidate();
     matchInitialized = false;
