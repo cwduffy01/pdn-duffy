@@ -10,6 +10,7 @@ enum class PktType : uint8_t
     kDebugPacket = 2,
     kHandshakeCommand = 3,
     kFdnConnect = 4,
+    kSymbolMatchCommand = 5,
     kNumPacketTypes //Not a real packet type, DO NOT USE
 };
 
