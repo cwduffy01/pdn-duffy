@@ -54,7 +54,7 @@ public:
         wirelessManager = new FakeQuickdrawWirelessManager();
         matchManager->initialize(player, &storage, wirelessManager);
 
-        idleState = new Idle(player, matchManager, &device.fakeRemoteDeviceCoordinator);
+        idleState = new QuickdrawIdleState(player, matchManager, &device.fakeRemoteDeviceCoordinator);
 
         ON_CALL(*device.mockDisplay, invalidateScreen()).WillByDefault(Return(device.mockDisplay));
         ON_CALL(*device.mockDisplay, drawImage(_)).WillByDefault(Return(device.mockDisplay));
@@ -77,7 +77,7 @@ public:
     FakeQuickdrawWirelessManager* wirelessManager;
     Player* player;
     MatchManager* matchManager;
-    Idle* idleState;
+    QuickdrawIdleState* idleState;
     FakePlatformClock* fakeClock;
 };
 
@@ -1177,7 +1177,7 @@ public:
 
 // Test: Idle state clears button callbacks on dismount
 inline void cleanupIdleClearsButtonCallbacks(StateCleanupTests* suite) {
-    Idle idleState(suite->player, suite->matchManager, &suite->device.fakeRemoteDeviceCoordinator);
+    QuickdrawIdleState idleState(suite->player, suite->matchManager, &suite->device.fakeRemoteDeviceCoordinator);
     
     EXPECT_CALL(*suite->device.mockPrimaryButton, setButtonPress(_, _, _)).Times(1);
     EXPECT_CALL(*suite->device.mockSecondaryButton, setButtonPress(_, _, _)).Times(1);
