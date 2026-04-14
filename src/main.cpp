@@ -29,6 +29,7 @@
 #include "apps/idle/idle.hpp"
 #include "apps/hacking/hacking.hpp"
 #include "apps/hacking/hacked-players-manager.hpp"
+#include "apps/symbol-match/symbol-match.hpp"
 #include "fdn-constants.hpp"
 
 // WiFi configuration - injected at compile time from wifi_credentials.ini
@@ -68,11 +69,13 @@ Player player = FDN_PLAYER;
 RemotePlayerManager* remotePlayerManager = nullptr;
 FDNConnectWirelessManager* fdnConnectWirelessManager = nullptr;
 HackedPlayersManager* hackedPlayersManager = nullptr;
+SymbolWirelessManager* symbolWirelessManager = nullptr;
 
 // Apps
 MainMenu* mainMenu = nullptr;
 Idle* idleApp = nullptr;
 Hacking* hackingApp = nullptr;
+SymbolMatch* symbolMatchApp = nullptr;
 
 static constexpr unsigned long PLAYER_BROADCAST_INTERVAL_MS = 12000;
 
@@ -134,6 +137,9 @@ void setup() {
 
     hackedPlayersManager = new HackedPlayersManager(pdn->getStorage());
 
+    symbolWirelessManager = new SymbolWirelessManager();
+    symbolWirelessManager->initialize(pdn->getWirelessManager());
+
     // Register ESP-NOW packet handlers
     peerCommsDriver->setPacketHandler(
         PktType::kPlayerInfoBroadcast,
@@ -149,6 +155,14 @@ void setup() {
             static_cast<FDNConnectWirelessManager*>(userArg)->processPacket(src, data, len);
         },
         fdnConnectWirelessManager
+    );
+
+    peerCommsDriver->setPacketHandler(
+        PktType::kSymbolMatchCommand,
+        [](const uint8_t* src, const uint8_t* data, const size_t len, void* userArg) {
+            static_cast<SymbolWirelessManager*>(userArg)->processSymbolMatchCommand(src, data, len);
+        },
+        symbolWirelessManager
     );
 
     // Construct apps
@@ -167,6 +181,8 @@ void setup() {
         pdn->getRemoteDeviceCoordinator()
     );
 
+    symbolMatchApp = new SymbolMatch(pdn, symbolWirelessManager);
+
     pdn->getDisplay()
         ->invalidateScreen()
         ->drawImage(alleycatLogoImage)
@@ -177,6 +193,7 @@ void setup() {
         {StateId(IDLE_APP_ID),       idleApp},
         {StateId(MAIN_MENU_APP_ID),  mainMenu},
         {StateId(HACKING_APP_ID),    hackingApp},
+        {StateId(SYMBOL_MATCH_APP_ID), symbolMatchApp},
     };
     pdn->loadAppConfig(apps, StateId(IDLE_APP_ID));
 }

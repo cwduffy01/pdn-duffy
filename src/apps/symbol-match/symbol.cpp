@@ -1,4 +1,4 @@
-#include "symbol-match/symbol.hpp"
+#include "apps/symbol-match/symbol.hpp"
 
 Symbol::Symbol() {
     setRandomSymbol();

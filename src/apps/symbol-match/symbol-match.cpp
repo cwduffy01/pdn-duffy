@@ -1,6 +1,7 @@
-#include "../../include/symbol-match/symbol-match.hpp"
+#include "apps/symbol-match/symbol-match.hpp"
+#include "apps/app-ids.hpp"
 
-SymbolMatch::SymbolMatch(Device* FDN, SymbolWirelessManager* symbolWirelessManager) : StateMachine(SYMBOLMATCH_APP_ID) {
+SymbolMatch::SymbolMatch(Device* FDN, SymbolWirelessManager* symbolWirelessManager) : StateMachine(SYMBOL_MATCH_APP_ID) {
     this->remoteDeviceCoordinator = FDN->getRemoteDeviceCoordinator();
     this->symbolManager = new SymbolManager();
     this->symbolWirelessManager = symbolWirelessManager;

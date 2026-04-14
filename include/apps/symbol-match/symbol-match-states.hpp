@@ -2,8 +2,8 @@
 
 #include "state/connect-state.hpp"
 #include "state/state.hpp"
-#include "symbol-match/symbol-manager.hpp"
-#include "symbol-match/symbol-match.hpp"
+#include "apps/symbol-match/symbol-manager.hpp"
+#include "apps/symbol-match/symbol-match.hpp"
 #include "utils/simple-timer.hpp"
 #include "wireless/symbol-wireless-manager.hpp"
 

@@ -1,4 +1,4 @@
-#include "symbol-match/symbol-manager.hpp"
+#include "apps/symbol-match/symbol-manager.hpp"
 
 SymbolManager::SymbolManager() {
     symbols[SymbolPosition::LEFT] = new Symbol();

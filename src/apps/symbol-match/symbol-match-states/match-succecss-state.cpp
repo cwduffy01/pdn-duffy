@@ -1,4 +1,4 @@
-#include "symbol-match/symbol-match-states.hpp"
+#include "apps/symbol-match/symbol-match-states.hpp"
 #include "device/drivers/logger.hpp"
 
 static const char* TAG = "SymbolMatch";

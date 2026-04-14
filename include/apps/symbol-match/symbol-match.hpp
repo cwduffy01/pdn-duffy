@@ -2,12 +2,10 @@
 
 #include "device/device.hpp"
 #include "state/state-machine.hpp"
-#include "symbol-match-states.hpp"
-#include "symbol-match/symbol-manager.hpp"
+#include "apps/symbol-match/symbol-match-states.hpp"
+#include "apps/symbol-match/symbol-manager.hpp"
 
 class SymbolWirelessManager;
-
-constexpr int SYMBOLMATCH_APP_ID = 1;
 
 class SymbolMatch : public StateMachine {
 public:

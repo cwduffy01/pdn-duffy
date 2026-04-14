@@ -2,7 +2,7 @@
 
 #include <random>
 #include <map>
-#include "symbol-match/symbol.hpp"
+#include "apps/symbol-match/symbol.hpp"
 #include "utils/simple-timer.hpp"
 
 enum class SymbolPosition {

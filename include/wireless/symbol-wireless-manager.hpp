@@ -5,7 +5,7 @@
 
 #include "device/drivers/serial-wrapper.hpp"
 #include "device/wireless-manager.hpp"
-#include "symbol-match/symbol.hpp"
+#include "apps/symbol-match/symbol.hpp"
 
 struct SymbolMatchPacket {
     int command;

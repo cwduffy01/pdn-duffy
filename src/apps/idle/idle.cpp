@@ -64,8 +64,11 @@ void Idle::populateStateMap() {
         std::bind(&ConnectionDetectedState::transitionToIdle, connectionDetectedState), idleState));
     connectionDetectedState->addTransition(new StateTransition(
         std::bind(&ConnectionDetectedState::transitionToAuth, connectionDetectedState), authDetectedState));
-    connectionDetectedState->addTransition(new StateTransition(
-        std::bind(&ConnectionDetectedState::transitionToUnauthorized, connectionDetectedState), unauthorizedDetectedState));
+    // connectionDetectedState->addTransition(new StateTransition(
+    //     std::bind(&ConnectionDetectedState::transitionToUnauthorized, connectionDetectedState), unauthorizedDetectedState));
+    connectionDetectedState->addAppTransition(
+        std::bind(&ConnectionDetectedState::transitionToUnauthorized, connectionDetectedState), StateId(SYMBOL_MATCH_APP_ID));
+    
 
     // AuthDetectedState transitions (disconnect back to idle; app switch to main menu)
     authDetectedState->addTransition(new StateTransition(
