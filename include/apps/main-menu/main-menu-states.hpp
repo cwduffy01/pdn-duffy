@@ -21,7 +21,7 @@ public:
     void onStateDismounted(Device *PDN) override;
 
     bool isJackRequired(SerialIdentifier jack) override;
-    bool transitionToIdle();
+    bool transitionToSymbolMatch();
 
 private:
     const char* MAIN_MENU_MESSAGE[2] = {"MAIN", "MENU"};

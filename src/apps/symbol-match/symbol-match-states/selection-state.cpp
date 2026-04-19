@@ -21,16 +21,6 @@ void Selection::onStateMounted(Device *FDN) {
     symbolManager->getRefreshTimer()->invalidate();
     symbolManager->refreshSymbols();
     bufferTimer.setTimer(bufferInterval);
-
-    // Send SYMBOLS_REFRESHED to all known peers
-    for (SerialIdentifier port : {SerialIdentifier::INPUT_JACK_SECONDARY, SerialIdentifier::INPUT_JACK}) {
-        const uint8_t* peerMac = remoteDeviceCoordinator->getPeerMac(port);
-        if (peerMac != nullptr) {
-            symbolWirelessManager->setMacPeer(peerMac);
-            symbolWirelessManager->sendPacket(SMCommand::SYMBOLS_REFRESHED, SymbolId::SYMBOL_A, port);
-        }
-    }
-
 }
 
 void Selection::onStateLoop(Device *FDN) {

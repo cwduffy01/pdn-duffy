@@ -190,12 +190,11 @@ void setup() {
     delay(3000);
 
     AppConfig apps = {
-        {StateId(IDLE_APP_ID),       idleApp},
-        {StateId(MAIN_MENU_APP_ID),  mainMenu},
-        {StateId(HACKING_APP_ID),    hackingApp},
         {StateId(SYMBOL_MATCH_APP_ID), symbolMatchApp},
+        {StateId(MAIN_MENU_APP_ID),  mainMenu},
+        {StateId(HACKING_APP_ID),    hackingApp}
     };
-    pdn->loadAppConfig(apps, StateId(IDLE_APP_ID));
+    pdn->loadAppConfig(apps, StateId(SYMBOL_MATCH_APP_ID));
 }
 
 void loop() {

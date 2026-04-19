@@ -27,14 +27,7 @@ void SymbolIdle::onStateMounted(Device *FDN) {
 
     symbolWirelessManager->setPacketReceivedCallback(std::bind(&SymbolIdle::onSymbolMatchCommandReceived, this, std::placeholders::_1));
 
-    parameterizedCallbackFunction refreshSymbols = [](void *ctx) {
-        SymbolIdle* symbolIdleState = (SymbolIdle*)ctx;
-        symbolIdleState->symbolManager->refreshSymbols();
-    };
-
-    FDN->getSecondaryButton()->setButtonPress(refreshSymbols, this, ButtonInteraction::CLICK);
-
-    // Send SYMBOLS_REFRESHED to all known peers
+    // Send current symbols to all known peers
     for (SerialIdentifier port : {SerialIdentifier::INPUT_JACK_SECONDARY, SerialIdentifier::INPUT_JACK}) {
         const uint8_t* peerMac = remoteDeviceCoordinator->getPeerMac(port);
         if (peerMac != nullptr) {
@@ -117,6 +110,16 @@ void SymbolIdle::onStateDismounted(Device *FDN) {
 
     symbolManager->setLeftMatched(false);
     symbolManager->setRightMatched(false);
+
+    for (SerialIdentifier port : {SerialIdentifier::INPUT_JACK_SECONDARY, SerialIdentifier::INPUT_JACK}) {
+        const uint8_t* peerMac = remoteDeviceCoordinator->getPeerMac(port);
+        if (peerMac != nullptr) {
+            symbolWirelessManager->setMacPeer(peerMac);
+            symbolWirelessManager->sendPacket(SMCommand::SYMBOLS_REFRESHED, SymbolId::SYMBOL_A, port);
+        }
+    }
+
+    transitionToMainMenuApp = false;
 }
 
 void SymbolIdle::renderSymbolScreen(Device *FDN) {
@@ -178,6 +181,11 @@ bool SymbolIdle::transitionToSelection() {
 
 bool SymbolIdle::transitionToMatchSuccess() {
     return symbolManager->isLeftMatched() && symbolManager->isRightMatched();
+}
+
+bool SymbolIdle::transitionToMainMenu() {
+    // if a connected device has already matches on this FDN (check storage!!)
+    return transitionToMainMenuApp;
 }
 
 bool SymbolIdle::isJackRequired(SerialIdentifier jack) {

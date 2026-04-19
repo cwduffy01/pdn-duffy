@@ -13,6 +13,7 @@ void MainMenuState::onStateMounted(Device* PDN) {
     LOG_I(TAG, "Mounted");
     PDN->getDisplay()
         ->invalidateScreen()
+        ->setGlyphMode(FontMode::TEXT)
         ->drawText(MAIN_MENU_MESSAGE[0], 40, 24)
         ->drawText(MAIN_MENU_MESSAGE[1], 40, 40)
         ->render();
@@ -28,6 +29,6 @@ bool MainMenuState::isJackRequired(SerialIdentifier jack) {
     return jack == SerialIdentifier::INPUT_JACK || jack == SerialIdentifier::INPUT_JACK_SECONDARY;
 }
 
-bool MainMenuState::transitionToIdle() {
+bool MainMenuState::transitionToSymbolMatch() {
     return !isConnected();
 }

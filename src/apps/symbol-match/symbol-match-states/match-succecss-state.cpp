@@ -31,9 +31,6 @@ void MatchSuccess::onStateMounted(Device *FDN) {
 }
 
 void MatchSuccess::onStateLoop(Device *FDN) {
-    if (bufferTimer.expired()) {
-        transitionToSelectionState = true;
-    }
     
     if (renderTimer.expired()) {
         renderSymbolScreen(FDN);
@@ -45,7 +42,6 @@ void MatchSuccess::onStateDismounted(Device *FDN) {
     LOG_W(TAG, "MatchSuccess dismounted");
     bufferTimer.invalidate();
     renderTimer.invalidate();
-    transitionToSelectionState = false;
     toggleBlink = true;
 }
 
@@ -62,8 +58,8 @@ void MatchSuccess::renderSymbolScreen(Device *FDN) {
     toggleBlink = !toggleBlink;
 }
 
-bool MatchSuccess::transitionToSelection() {
-    return transitionToSelectionState;
+bool MatchSuccess::transitionToMainMenu() {
+    return bufferTimer.expired();
 }
 
 bool MatchSuccess::isJackRequired(SerialIdentifier jack) {

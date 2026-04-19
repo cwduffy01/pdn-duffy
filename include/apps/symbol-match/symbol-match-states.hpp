@@ -44,6 +44,7 @@ public:
     void onStateDismounted(Device *FDN) override;
     bool transitionToSelection();
     bool transitionToMatchSuccess();
+    bool transitionToMainMenu();
 
     bool isJackRequired(SerialIdentifier jack) override;
 
@@ -53,7 +54,8 @@ private:
 
     bool transitionToSelectionState = false;
     bool transitionToMatchSuccessState = false;
- 
+    bool transitionToMainMenuApp = false;
+
     SymbolManager* symbolManager;
     SymbolWirelessManager* symbolWirelessManager;
     /// Set while SYMBOL_IDLE is active; used when ESP-NOW callbacks need the display.
@@ -74,7 +76,7 @@ public:
     void onStateMounted(Device *FDN) override;
     void onStateLoop(Device *FDN) override;
     void onStateDismounted(Device *FDN) override;
-    bool transitionToSelection();
+    bool transitionToMainMenu();
 
     bool isJackRequired(SerialIdentifier jack) override;
 
@@ -84,7 +86,6 @@ private:
 
     void renderSymbolScreen(Device *FDN);
 
-    bool transitionToSelectionState = false;
     bool toggleBlink = true;
 
     SimpleTimer bufferTimer;
