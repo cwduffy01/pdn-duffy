@@ -1,22 +1,17 @@
 #pragma once
 
-#include <random>
 #include <map>
 #include "apps/symbol-match/symbol.hpp"
+#include "device/drivers/serial-wrapper.hpp"
 #include "utils/simple-timer.hpp"
-
-enum class SymbolPosition {
-    LEFT = 0,
-    RIGHT = 1,
-};
 
 class SymbolManager {
     public:
     SymbolManager();
     ~SymbolManager();
 
-    Symbol* getSymbol(SymbolPosition position);
-    const char* getSymbolGlyph(SymbolPosition position);
+    Symbol* getSymbol(SerialIdentifier port);
+    const char* getSymbolGlyph(SerialIdentifier port);
     void refreshSymbols();
 
     void validateSymbols(const uint8_t* fdnMac);
@@ -31,10 +26,10 @@ class SymbolManager {
     void setRightMatched(bool matched);
 
 private:
-    std::map<SymbolPosition, Symbol*> symbols;
+    std::map<SerialIdentifier, Symbol*> symbols;
 
     SimpleTimer refreshTimer;
-    int refreshInterval = (int)(30 * 1000);
+    int refreshInterval = (int)(10 * 1000);
 
     bool leftMatched = false;
     bool rightMatched = false;

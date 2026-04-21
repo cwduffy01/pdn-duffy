@@ -33,11 +33,9 @@ void SymbolIdle::onStateMounted(Device *FDN) {
         if (peerMac != nullptr) {
             symbolWirelessManager->setMacPeer(peerMac);
             if (port == SerialIdentifier::INPUT_JACK) {
-                // primary input jack → LEFT on FDN hardware
-                symbolWirelessManager->sendPacket(SMCommand::SEND_SYMBOL, symbolManager->getSymbol(SymbolPosition::LEFT)->getSymbolId(), port);
+                symbolWirelessManager->sendPacket(SMCommand::SEND_SYMBOL, symbolManager->getSymbol(SerialIdentifier::INPUT_JACK)->getSymbolId(), port);
             } else if (port == SerialIdentifier::INPUT_JACK_SECONDARY) {
-                // secondary input jack → RIGHT
-                symbolWirelessManager->sendPacket(SMCommand::SEND_SYMBOL, symbolManager->getSymbol(SymbolPosition::RIGHT)->getSymbolId(), port);
+                symbolWirelessManager->sendPacket(SMCommand::SEND_SYMBOL, symbolManager->getSymbol(SerialIdentifier::INPUT_JACK_SECONDARY)->getSymbolId(), port);
             }
         }
     }
@@ -68,7 +66,7 @@ void SymbolIdle::onStateLoop(Device *FDN) {
         if (peerMac != nullptr) {
             symbolWirelessManager->setMacPeer(peerMac);
             symbolWirelessManager->sendPacket(SMCommand::SEND_SYMBOL,
-                symbolManager->getSymbol(SymbolPosition::LEFT)->getSymbolId(),
+                symbolManager->getSymbol(SerialIdentifier::INPUT_JACK)->getSymbolId(),
                 SerialIdentifier::INPUT_JACK);
             symbolSentLeft = true;
         }
@@ -81,7 +79,7 @@ void SymbolIdle::onStateLoop(Device *FDN) {
         if (peerMac != nullptr) {
             symbolWirelessManager->setMacPeer(peerMac);
             symbolWirelessManager->sendPacket(SMCommand::SEND_SYMBOL,
-                symbolManager->getSymbol(SymbolPosition::RIGHT)->getSymbolId(),
+                symbolManager->getSymbol(SerialIdentifier::INPUT_JACK_SECONDARY)->getSymbolId(),
                 SerialIdentifier::INPUT_JACK_SECONDARY);
             symbolSentRight = true;
         }
@@ -138,11 +136,11 @@ void SymbolIdle::renderSymbolScreen(Device *FDN) {
     FDN->getDisplay()->setGlyphMode(FontMode::SYMBOL_GLYPH);
 
     if (symbolManager->isLeftMatched() || !leftConnected || blinkToggle) {
-        FDN->getDisplay()->renderGlyph(symbolManager->getSymbolGlyph(SymbolPosition::LEFT), 24, 40);
+        FDN->getDisplay()->renderGlyph(symbolManager->getSymbolGlyph(SerialIdentifier::INPUT_JACK), 24, 40);
     } 
 
     if (symbolManager->isRightMatched() || !rightConnected || blinkToggle) {
-        FDN->getDisplay()->renderGlyph(symbolManager->getSymbolGlyph(SymbolPosition::RIGHT), 72, 40);
+        FDN->getDisplay()->renderGlyph(symbolManager->getSymbolGlyph(SerialIdentifier::INPUT_JACK_SECONDARY), 72, 40);
     }
 
     FDN->getDisplay()->setGlyphMode(FontMode::TEXT_INVERTED_LARGE);

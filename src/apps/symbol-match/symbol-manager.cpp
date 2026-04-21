@@ -2,8 +2,8 @@
 #include <cstdlib>
 
 SymbolManager::SymbolManager() {
-    symbols[SymbolPosition::LEFT] = new Symbol();
-    symbols[SymbolPosition::RIGHT] = new Symbol();
+    symbols[SerialIdentifier::INPUT_JACK] = new Symbol();
+    symbols[SerialIdentifier::INPUT_JACK_SECONDARY] = new Symbol();
     refreshSymbols();
 }
 
@@ -15,8 +15,8 @@ SymbolManager::~SymbolManager() {
 }
 
 void SymbolManager::refreshSymbols() {
-    const SymbolId prevLeft = symbols[SymbolPosition::LEFT]->getSymbolId();
-    const SymbolId prevRight = symbols[SymbolPosition::RIGHT]->getSymbolId();
+    const SymbolId prevLeft = symbols[SerialIdentifier::INPUT_JACK]->getSymbolId();
+    const SymbolId prevRight = symbols[SerialIdentifier::INPUT_JACK_SECONDARY]->getSymbolId();
 
     const int n = static_cast<int>(SymbolId::NUM_SYMBOLS);
     SymbolId pool[static_cast<int>(SymbolId::NUM_SYMBOLS)];
@@ -28,16 +28,18 @@ void SymbolManager::refreshSymbols() {
         }
     }
 
-    symbols[SymbolPosition::LEFT]->setSymbolId(pool[std::rand() % count]);
-    symbols[SymbolPosition::RIGHT]->setSymbolId(pool[std::rand() % count]);
+    symbols[SerialIdentifier::INPUT_JACK]->setSymbolId(pool[std::rand() % count]);
+    symbols[SerialIdentifier::INPUT_JACK_SECONDARY]->setSymbolId(pool[std::rand() % count]);
+
+    
 }
 
-Symbol* SymbolManager::getSymbol(SymbolPosition position) {
-    return symbols[position];
+Symbol* SymbolManager::getSymbol(SerialIdentifier port) {
+    return symbols[port];
 }
 
-const char* SymbolManager::getSymbolGlyph(SymbolPosition position) {
-    return symbols[position]->getSymbolGlyph();
+const char* SymbolManager::getSymbolGlyph(SerialIdentifier port) {
+    return symbols[port]->getSymbolGlyph();
 }
 
 SimpleTimer* SymbolManager::getRefreshTimer() {

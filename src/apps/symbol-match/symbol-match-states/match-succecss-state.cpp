@@ -50,8 +50,8 @@ void MatchSuccess::renderSymbolScreen(Device *FDN) {
     FDN->getDisplay()->whiteScreen();
     FDN->getDisplay()->setGlyphMode(FontMode::SYMBOL_GLYPH);
     if (toggleBlink) {
-        FDN->getDisplay()->renderGlyph(symbolManager->getSymbolGlyph(SymbolPosition::LEFT), 24, 40);
-        FDN->getDisplay()->renderGlyph(symbolManager->getSymbolGlyph(SymbolPosition::RIGHT), 72, 40);
+        FDN->getDisplay()->renderGlyph(symbolManager->getSymbolGlyph(SerialIdentifier::INPUT_JACK), 24, 40);
+        FDN->getDisplay()->renderGlyph(symbolManager->getSymbolGlyph(SerialIdentifier::INPUT_JACK_SECONDARY), 72, 40);
     }
     FDN->getDisplay()->render();
 
