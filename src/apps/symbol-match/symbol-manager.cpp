@@ -1,8 +1,10 @@
 #include "apps/symbol-match/symbol-manager.hpp"
+#include <cstdlib>
 
 SymbolManager::SymbolManager() {
     symbols[SymbolPosition::LEFT] = new Symbol();
     symbols[SymbolPosition::RIGHT] = new Symbol();
+    refreshSymbols();
 }
 
 SymbolManager::~SymbolManager() {
@@ -13,9 +15,21 @@ SymbolManager::~SymbolManager() {
 }
 
 void SymbolManager::refreshSymbols() {
-    for(auto& symbol : symbols) {
-        symbol.second->setRandomSymbol();
+    const SymbolId prevLeft = symbols[SymbolPosition::LEFT]->getSymbolId();
+    const SymbolId prevRight = symbols[SymbolPosition::RIGHT]->getSymbolId();
+
+    const int n = static_cast<int>(SymbolId::NUM_SYMBOLS);
+    SymbolId pool[static_cast<int>(SymbolId::NUM_SYMBOLS)];
+    int count = 0;
+    for (int i = 0; i < n; ++i) {
+        const SymbolId id = static_cast<SymbolId>(i);
+        if (id != prevLeft && id != prevRight) {
+            pool[count++] = id;
+        }
     }
+
+    symbols[SymbolPosition::LEFT]->setSymbolId(pool[std::rand() % count]);
+    symbols[SymbolPosition::RIGHT]->setSymbolId(pool[std::rand() % count]);
 }
 
 Symbol* SymbolManager::getSymbol(SymbolPosition position) {
