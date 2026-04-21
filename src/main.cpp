@@ -181,7 +181,7 @@ void setup() {
         pdn->getRemoteDeviceCoordinator()
     );
 
-    symbolMatchApp = new SymbolMatch(pdn, symbolWirelessManager);
+    symbolMatchApp = new SymbolMatch(pdn, symbolWirelessManager, remotePlayerManager, hackedPlayersManager);
 
     pdn->getDisplay()
         ->invalidateScreen()
