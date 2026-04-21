@@ -17,7 +17,6 @@
 
 #include "utils/simple-timer.hpp"
 #include "game/player.hpp"
-#include "state/state-machine.hpp"
 #include "device/pdn.hpp"
 #include "id-generator.hpp"
 #include "wireless/remote-player-manager.hpp"
@@ -181,7 +180,8 @@ void setup() {
         pdn->getRemoteDeviceCoordinator()
     );
 
-    symbolMatchApp = new SymbolMatch(pdn, symbolWirelessManager, remotePlayerManager, hackedPlayersManager);
+    symbolMatchApp = new SymbolMatch(
+        pdn, symbolWirelessManager, remotePlayerManager, hackedPlayersManager, fdnConnectWirelessManager);
 
     pdn->getDisplay()
         ->invalidateScreen()

@@ -1,8 +1,8 @@
 #include "apps/symbol-match/symbol-match.hpp"
 #include "apps/app-ids.hpp"
-#include "apps/idle/states/upload-pending-hacks-state.hpp"
 #include "wireless/remote-player-manager.hpp"
 #include "apps/hacking/hacked-players-manager.hpp"
+#include "wireless/fdn-connect-wireless-manager.hpp"
 #include "device/drivers/light-interface.hpp"
 #include "device/drivers/logger.hpp"
 #include <algorithm>
@@ -14,13 +14,15 @@ static const char* TAG = "SymbolMatch";
 }
 
 SymbolMatch::SymbolMatch(Device* FDN, SymbolWirelessManager* symbolWirelessManager,
-                         RemotePlayerManager* remotePlayerManager, HackedPlayersManager* hackedPlayersManager)
+                         RemotePlayerManager* remotePlayerManager, HackedPlayersManager* hackedPlayersManager,
+                         FDNConnectWirelessManager* fdnConnectWirelessManager)
     : StateMachine(SYMBOL_MATCH_APP_ID) {
     this->remoteDeviceCoordinator = FDN->getRemoteDeviceCoordinator();
     this->symbolManager = new SymbolManager();
     this->symbolWirelessManager = symbolWirelessManager;
     this->remotePlayerManager = remotePlayerManager;
     this->hackedPlayersManager = hackedPlayersManager;
+    this->fdnConnectWirelessManager = fdnConnectWirelessManager;
 }
 
 SymbolMatch::~SymbolMatch() {
@@ -29,11 +31,22 @@ SymbolMatch::~SymbolMatch() {
     symbolWirelessManager = nullptr;
     remotePlayerManager = nullptr;
     hackedPlayersManager = nullptr;
+    fdnConnectWirelessManager = nullptr;
 }
 
 void SymbolMatch::onStateMounted(Device* PDN) {
     // Avoid stale nearby-device events from firing immediately on app entry.
     remotePlayerManager->consumePacketReceived();
+    connectionResolved = false;
+    pendingConnectedPlayerId.clear();
+    fdnConnectWirelessManager->setConnectCallback(
+        [this](const std::string& playerId, const uint8_t* senderMac) {
+            LOG_I(TAG, "PDN connected, player: %s", playerId.c_str());
+            fdnConnectWirelessManager->setPeer(senderMac);
+            pendingConnectedPlayerId = playerId;
+            connectionResolved = true;
+        }
+    );
     nearbyAnimationTimer.invalidate();
     nearbyAnimationActive = false;
     startIdleLightAnimation(PDN);
@@ -44,6 +57,9 @@ void SymbolMatch::onStateMounted(Device* PDN) {
 
 void SymbolMatch::onStateDismounted(Device* PDN) {
     uploadCheckTimer.invalidate();
+    fdnConnectWirelessManager->clearCallbacks();
+    connectionResolved = false;
+    pendingConnectedPlayerId.clear();
     nearbyAnimationTimer.invalidate();
     nearbyAnimationActive = false;
     PDN->getLightManager()->stopAnimation();
@@ -125,6 +141,18 @@ void SymbolMatch::onStateLoop(Device* PDN) {
     }
     updateNearbyDeviceAnimation(PDN);
 
+    if (connectionResolved &&
+        currentState &&
+        (currentState->getStateId() == SymbolMatchStateId::SELECTION ||
+         currentState->getStateId() == SymbolMatchStateId::SYMBOL_IDLE)) {
+        auto* connectionDetected =
+            static_cast<SymbolMatchConnectionDetectedState*>(stateMap[kConnectionDetectedStateIndex]);
+        connectionDetected->receivePdnConnection(pendingConnectedPlayerId);
+        skipToState(PDN, kConnectionDetectedStateIndex);
+        connectionResolved = false;
+        return;
+    }
+
     if (currentState && currentState->getStateId() == SymbolMatchStateId::SELECTION) {
         if (!uploadCheckTimer.isRunning()) {
             uploadCheckTimer.setTimer(UPLOAD_CHECK_INTERVAL_MS);
@@ -150,12 +178,46 @@ void SymbolMatch::populateStateMap() {
     Selection* selection = new Selection(symbolManager, remoteDeviceCoordinator, symbolWirelessManager);
     SymbolIdle* symbolIdle = new SymbolIdle(symbolManager, remoteDeviceCoordinator, symbolWirelessManager);
     MatchSuccess* matchSuccess = new MatchSuccess(symbolManager, remoteDeviceCoordinator, symbolWirelessManager);
-    auto* uploadPending = new UploadPendingHacksState(hackedPlayersManager);
+    auto* uploadPending = new SymbolMatchUploadPendingHacksState(hackedPlayersManager);
+    auto* connectionDetected =
+        new SymbolMatchConnectionDetectedState(hackedPlayersManager, remoteDeviceCoordinator);
+    auto* authDetected =
+        new SymbolMatchAuthDetectedState(remoteDeviceCoordinator, fdnConnectWirelessManager);
+    auto* unauthorizedDetected =
+        new SymbolMatchUnauthorizedDetectedState(remoteDeviceCoordinator);
 
     uploadPending->addTransition(
         new StateTransition(
-            std::bind(&UploadPendingHacksState::transitionToIdle, uploadPending),
+            std::bind(&SymbolMatchUploadPendingHacksState::transitionToIdle, uploadPending),
             selection));
+
+    connectionDetected->addTransition(
+        new StateTransition(
+            std::bind(&SymbolMatchConnectionDetectedState::transitionToSelection, connectionDetected),
+            selection));
+    connectionDetected->addTransition(
+        new StateTransition(
+            std::bind(&SymbolMatchConnectionDetectedState::transitionToAuth, connectionDetected),
+            authDetected));
+    connectionDetected->addAppTransition(
+        std::bind(&SymbolMatchConnectionDetectedState::transitionToUnauthorized, connectionDetected),
+        StateId(HACKING_APP_ID));
+
+    authDetected->addTransition(
+        new StateTransition(
+            std::bind(&SymbolMatchAuthDetectedState::transitionToSelection, authDetected),
+            selection));
+    authDetected->addAppTransition(
+        std::bind(&SymbolMatchAuthDetectedState::transitionToMainMenu, authDetected),
+        StateId(MAIN_MENU_APP_ID));
+
+    unauthorizedDetected->addTransition(
+        new StateTransition(
+            std::bind(&SymbolMatchUnauthorizedDetectedState::transitionToSelection, unauthorizedDetected),
+            selection));
+    unauthorizedDetected->addAppTransition(
+        std::bind(&SymbolMatchUnauthorizedDetectedState::transitionToHacking, unauthorizedDetected),
+        StateId(HACKING_APP_ID));
 
     selection->addTransition(
         new StateTransition(
@@ -182,4 +244,7 @@ void SymbolMatch::populateStateMap() {
     stateMap.push_back(symbolIdle);
     stateMap.push_back(matchSuccess);
     stateMap.push_back(uploadPending);
+    stateMap.push_back(connectionDetected);
+    stateMap.push_back(authDetected);
+    stateMap.push_back(unauthorizedDetected);
 }

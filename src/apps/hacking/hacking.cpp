@@ -1,6 +1,5 @@
 #include "apps/hacking/hacking.hpp"
 #include "apps/hacking/states/hacking-show-hint-state.hpp"
-#include "device/drivers/logger.hpp"
 
 #define TAG "HACKING"
 
@@ -19,7 +18,7 @@ void Hacking::populateStateMap() {
         fdnConnectWirelessManager, hackedPlayersManager, remoteDeviceCoordinator);
 
         showHintState->addAppTransition(
-            std::bind(&HackingShowHintState::shouldTransitionToIdle, showHintState), StateId(IDLE_APP_ID));
+            std::bind(&HackingShowHintState::shouldTransitionToIdle, showHintState), StateId(SYMBOL_MATCH_APP_ID));
 
     stateMap.push_back(showHintState); // [0] HACKING_HINT
 }

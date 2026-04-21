@@ -5,15 +5,17 @@
 #include "apps/symbol-match/symbol-match-states.hpp"
 #include "apps/symbol-match/symbol-manager.hpp"
 #include "utils/simple-timer.hpp"
+#include <string>
 
 class SymbolWirelessManager;
 class RemotePlayerManager;
 class HackedPlayersManager;
+class FDNConnectWirelessManager;
 
 class SymbolMatch : public StateMachine {
 public:
     SymbolMatch(Device* FDN, SymbolWirelessManager* symbolWirelessManager, RemotePlayerManager* remotePlayerManager,
-                HackedPlayersManager* hackedPlayersManager);
+                HackedPlayersManager* hackedPlayersManager, FDNConnectWirelessManager* fdnConnectWirelessManager);
     ~SymbolMatch();
 
     void populateStateMap() override;
@@ -33,6 +35,9 @@ private:
     SymbolWirelessManager* symbolWirelessManager;
     RemotePlayerManager* remotePlayerManager;
     HackedPlayersManager* hackedPlayersManager;
+    FDNConnectWirelessManager* fdnConnectWirelessManager;
+    bool connectionResolved = false;
+    std::string pendingConnectedPlayerId;
 
     SimpleTimer uploadCheckTimer;
     SimpleTimer nearbyAnimationTimer;
@@ -45,6 +50,7 @@ private:
 
     static constexpr int UPLOAD_CHECK_INTERVAL_MS = 5 * 60 * 1000;
     static constexpr int kUploadPendingStateIndex = 3;
+    static constexpr int kConnectionDetectedStateIndex = 4;
     static constexpr int STRONG_RSSI_THRESHOLD = -50;
     static constexpr int MEDIUM_RSSI_THRESHOLD = -60;
 };
