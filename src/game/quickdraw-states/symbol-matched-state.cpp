@@ -20,7 +20,9 @@ void SymbolMatched::onStateMounted(Device *PDN) {
     toggleBlink = true;
     blinkTimer.setTimer(BLINK_INTERVAL);
 
-    symbolWirelessManager->setPacketReceivedCallback(std::bind(&SymbolMatched::onSymbolMatchCommandReceived, this, std::placeholders::_1));
+    const auto onCmd = std::bind(&SymbolMatched::onSymbolMatchCommandReceived, this, std::placeholders::_1);
+    symbolWirelessManager->setPacketReceivedCallback(onCmd, SerialIdentifier::INPUT_JACK);
+    symbolWirelessManager->setPacketReceivedCallback(onCmd, SerialIdentifier::INPUT_JACK_SECONDARY);
 }
 
 void SymbolMatched::onStateLoop(Device *PDN) {

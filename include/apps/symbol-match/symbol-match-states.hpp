@@ -58,7 +58,6 @@ public:
 
 private:
     void renderSymbolScreen(Device *FDN);
-    void onSymbolMatchCommandReceived(SymbolMatchCommand command);
 
     bool transitionToSelectionState = false;
     bool transitionToMatchSuccessState = false;

@@ -25,7 +25,27 @@ void SymbolIdle::onStateMounted(Device *FDN) {
 
     renderSymbolScreen(FDN);
 
-    symbolWirelessManager->setPacketReceivedCallback(std::bind(&SymbolIdle::onSymbolMatchCommandReceived, this, std::placeholders::_1));
+    symbolWirelessManager->setPacketReceivedCallback([this](const SymbolMatchCommand& command) {
+        if (command.command != SMCommand::SEND_SYMBOL) {
+            return;
+        }
+
+        symbolManager->setLeftMatched(true);
+        if (mountedFdn != nullptr) {
+            renderSymbolScreen(mountedFdn);
+        }
+    }, SerialIdentifier::INPUT_JACK);
+
+    symbolWirelessManager->setPacketReceivedCallback([this](const SymbolMatchCommand& command) {
+        if (command.command != SMCommand::SEND_SYMBOL) {
+            return;
+        }
+
+        symbolManager->setRightMatched(true);
+        if (mountedFdn != nullptr) {
+            renderSymbolScreen(mountedFdn);
+        }
+    }, SerialIdentifier::INPUT_JACK_SECONDARY);
 
     // Send current symbols to all known peers
     for (SerialIdentifier port : {SerialIdentifier::INPUT_JACK_SECONDARY, SerialIdentifier::INPUT_JACK}) {
@@ -155,22 +175,6 @@ void SymbolIdle::renderSymbolScreen(Device *FDN) {
     FDN->getDisplay()->drawText(buffer, 40, 64);
 
     FDN->getDisplay()->render();
-}
-
-void SymbolIdle::onSymbolMatchCommandReceived(SymbolMatchCommand command) {
-    if (command.command != SMCommand::SEND_SYMBOL) {
-        return;
-    }
-
-    if (command.serialPort == SerialIdentifier::INPUT_JACK) {
-        symbolManager->setLeftMatched(true);
-    } else if (command.serialPort == SerialIdentifier::INPUT_JACK_SECONDARY) {
-        symbolManager->setRightMatched(true);
-    }
-
-    if (mountedFdn != nullptr) {
-        renderSymbolScreen(mountedFdn);
-    }
 }
 
 bool SymbolIdle::transitionToSelection() {

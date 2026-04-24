@@ -137,7 +137,7 @@ void setup() {
     hackedPlayersManager = new HackedPlayersManager(pdn->getStorage());
 
     symbolWirelessManager = new SymbolWirelessManager();
-    symbolWirelessManager->initialize(pdn->getWirelessManager());
+    symbolWirelessManager->initialize(pdn->getWirelessManager(), pdn->getRemoteDeviceCoordinator());
 
     // Register ESP-NOW packet handlers
     peerCommsDriver->setPacketHandler(

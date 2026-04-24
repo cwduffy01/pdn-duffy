@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <random>
 #include <map>
 
@@ -18,6 +19,8 @@ public:
     ~Symbol();
 
     void setRandomSymbol();
+    void setSymbolId(SymbolId id);
+    void updateFromUserIdString(const std::string& userId);
     SymbolId getSymbolId();
     const char* getSymbolGlyph();
 

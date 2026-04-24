@@ -45,8 +45,9 @@ void SymbolState::onStateMounted(Device *PDN) {
     PDN->getSecondaryButton()->setButtonPress(sendSymbolToFDN, this, ButtonInteraction::CLICK);
 
 
-    symbolWirelessManager->setPacketReceivedCallback(std::bind(&SymbolState::onSymbolMatchCommandReceived, this, std::placeholders::_1));
-    
+    const auto onCmd = std::bind(&SymbolState::onSymbolMatchCommandReceived, this, std::placeholders::_1);
+    symbolWirelessManager->setPacketReceivedCallback(onCmd, SerialIdentifier::INPUT_JACK);
+    symbolWirelessManager->setPacketReceivedCallback(onCmd, SerialIdentifier::INPUT_JACK_SECONDARY);
 }
 
 void SymbolState::onStateLoop(Device *PDN) {
@@ -150,8 +151,11 @@ void SymbolState::onSymbolMatchCommandReceived(SymbolMatchCommand command) {
 
     if (command.command == SMCommand::SEND_SYMBOL) {
         fdnSymbol = command.symbolId;
-        pdnJackToFdn = command.serialPort;
-
+        if (remoteDeviceCoordinator->getPeerDeviceType(SerialIdentifier::INPUT_JACK_SECONDARY) == DeviceType::FDN) {
+            pdnJackToFdn = SerialIdentifier::INPUT_JACK_SECONDARY;
+        } else if (remoteDeviceCoordinator->getPeerDeviceType(SerialIdentifier::INPUT_JACK) == DeviceType::FDN) {
+            pdnJackToFdn = SerialIdentifier::INPUT_JACK;
+        }
 
         if (fdnSymbol == player->getSymbol()->getSymbolId()) {
             matchReady = true;

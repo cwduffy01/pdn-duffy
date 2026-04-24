@@ -4,7 +4,7 @@
 #include <string>
 #include <iostream>
 #include <cstdint>
-#include "apps/symbol-match/symbol.hpp"
+#include "symbol.hpp"
 
 constexpr size_t PLAYER_ID_LENGTH = 4;
 constexpr size_t PLAYER_ID_BUFFER_SIZE = PLAYER_ID_LENGTH + 1;

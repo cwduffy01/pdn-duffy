@@ -1,7 +1,7 @@
 #pragma once
 
 #include <map>
-#include "apps/symbol-match/symbol.hpp"
+#include "symbol.hpp"
 #include "device/drivers/serial-wrapper.hpp"
 #include "utils/simple-timer.hpp"
 
