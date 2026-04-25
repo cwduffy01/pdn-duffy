@@ -19,10 +19,6 @@ void Symbol::setRandomSymbol() {
     symbolId = static_cast<SymbolId>(std::rand() % (int)SymbolId::NUM_SYMBOLS);
 }
 
-void Symbol::setSymbolId(SymbolId id) {
-    symbolId = id;
-}
-
 void Symbol::updateFromUserIdString(const std::string& userId) {
     if (userId.empty()) {
         return;

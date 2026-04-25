@@ -20,18 +20,13 @@ class SymbolManager {
     int getTimeLeftToRefresh();
     SimpleTimer* getRefreshTimer();
 
-    /// True when the last SEND_SYMBOL on that jack had the same symbol id as this FDN for that port.
-    bool isLeftOfficiallyMatched() const;
-    bool isRightOfficiallyMatched() const;
-    void setLeftOfficiallyMatched(bool matched);
-    void setRightOfficiallyMatched(bool matched);
+    bool isMatched(SerialIdentifier port) const;
+    void setMatched(SerialIdentifier port, bool matched);
 
 private:
     std::map<SerialIdentifier, Symbol*> symbols;
+    std::map<SerialIdentifier, bool> matchedByPort;
 
     SimpleTimer refreshTimer;
-    int refreshInterval = (int)(10 * 1000);
-
-    bool leftOfficiallyMatched_ = false;
-    bool rightOfficiallyMatched_ = false;
+    int refreshInterval = 30 * 60 * 1000;  // 30 minutes (ms)
 };

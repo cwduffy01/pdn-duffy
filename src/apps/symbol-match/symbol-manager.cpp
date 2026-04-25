@@ -1,9 +1,10 @@
 #include "apps/symbol-match/symbol-manager.hpp"
-// #include <cstdlib>  // refreshSymbols: random path below (commented) used std::rand
 
 SymbolManager::SymbolManager() {
     symbols[SerialIdentifier::INPUT_JACK] = new Symbol();
     symbols[SerialIdentifier::INPUT_JACK_SECONDARY] = new Symbol();
+    matchedByPort[SerialIdentifier::INPUT_JACK] = false;
+    matchedByPort[SerialIdentifier::INPUT_JACK_SECONDARY] = false;
     refreshSymbols();
 }
 
@@ -15,25 +16,16 @@ SymbolManager::~SymbolManager() {
 }
 
 void SymbolManager::refreshSymbols() {
-    // void SymbolManager::refreshSymbols() {
-    //     const SymbolId prevLeft = symbols[SerialIdentifier::INPUT_JACK]->getSymbolId();
-    //     const SymbolId prevRight = symbols[SerialIdentifier::INPUT_JACK_SECONDARY]->getSymbolId();
-    //
-    //     const int n = static_cast<int>(SymbolId::NUM_SYMBOLS);
-    //     SymbolId pool[static_cast<int>(SymbolId::NUM_SYMBOLS)];
-    //     int count = 0;
-    //     for (int i = 0; i < n; ++i) {
-    //         const SymbolId id = static_cast<SymbolId>(i);
-    //         if (id != prevLeft && id != prevRight) {
-    //             pool[count++] = id;
-    //         }
-    //     }
-    //
-    //     symbols[SerialIdentifier::INPUT_JACK]->setSymbolId(pool[std::rand() % count]);
-    //     symbols[SerialIdentifier::INPUT_JACK_SECONDARY]->setSymbolId(pool[std::rand() % count]);
-    // }
-    symbols[SerialIdentifier::INPUT_JACK]->setSymbolId(SymbolId::SYMBOL_E);
-    symbols[SerialIdentifier::INPUT_JACK_SECONDARY]->setSymbolId(SymbolId::SYMBOL_D);
+    const SymbolId prevLeft = symbols[SerialIdentifier::INPUT_JACK]->getSymbolId();
+    const SymbolId prevRight = symbols[SerialIdentifier::INPUT_JACK_SECONDARY]->getSymbolId();
+    do {
+        symbols[SerialIdentifier::INPUT_JACK]->setRandomSymbol();
+    } while (symbols[SerialIdentifier::INPUT_JACK]->getSymbolId() == prevLeft
+        || symbols[SerialIdentifier::INPUT_JACK]->getSymbolId() == prevRight);
+    do {
+        symbols[SerialIdentifier::INPUT_JACK_SECONDARY]->setRandomSymbol();
+    } while (symbols[SerialIdentifier::INPUT_JACK_SECONDARY]->getSymbolId() == prevLeft
+        || symbols[SerialIdentifier::INPUT_JACK_SECONDARY]->getSymbolId() == prevRight);
 }
 
 Symbol* SymbolManager::getSymbol(SerialIdentifier port) {
@@ -56,18 +48,11 @@ void SymbolManager::resetRefreshTimer() {
     refreshTimer.setTimer(refreshInterval);
 }
 
-void SymbolManager::setLeftOfficiallyMatched(bool matched) {
-    leftOfficiallyMatched_ = matched;
+void SymbolManager::setMatched(const SerialIdentifier port, const bool matched) {
+    matchedByPort[port] = matched;
 }
 
-void SymbolManager::setRightOfficiallyMatched(bool matched) {
-    rightOfficiallyMatched_ = matched;
-}
-
-bool SymbolManager::isLeftOfficiallyMatched() const {
-    return leftOfficiallyMatched_;
-}
-
-bool SymbolManager::isRightOfficiallyMatched() const {
-    return rightOfficiallyMatched_;
+bool SymbolManager::isMatched(const SerialIdentifier port) const {
+    const auto it = matchedByPort.find(port);
+    return it != matchedByPort.end() && it->second;
 }

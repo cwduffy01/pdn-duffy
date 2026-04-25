@@ -73,7 +73,7 @@ private:
 
     bool leftConnected = false;
     bool rightConnected = false;
-    /// Cache for side LED updates (sent + official match; avoid re-applying every tick).
+    /// Cache for side LED updates (sent + match; avoid re-applying every tick).
     bool lastSideLightLeft_ = false;
     bool lastSideLightRight_ = false;
     bool blinkToggle = true;
