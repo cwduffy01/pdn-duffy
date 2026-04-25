@@ -1,4 +1,7 @@
+#include <Arduino.h>
+
 #include "apps/symbol-match/symbol-match-states.hpp"
+#include "device/drivers/light-interface.hpp"
 #include "device/drivers/logger.hpp"
 
 static const char* TAG = "SymbolMatch";
@@ -19,6 +22,13 @@ void MatchSuccess::onStateMounted(Device *FDN) {
     LOG_W(TAG, "MatchSuccess mounted");
     bufferTimer.setTimer(bufferInterval);
     renderTimer.setTimer(renderInterval);
+
+    AnimationConfig winLights{};
+    winLights.type = (random(2) == 0) ? AnimationType::HUNTER_WIN : AnimationType::BOUNTY_WIN;
+    winLights.loop = true;
+    winLights.speed = 20;
+    winLights.curve = EaseCurve::EASE_IN_OUT;
+    FDN->getLightManager()->startAnimation(winLights);
 
     // Send SYMBOL_MATCH_SUCCESS to all known peers
     for (SerialIdentifier port : {SerialIdentifier::INPUT_JACK_SECONDARY, SerialIdentifier::INPUT_JACK}) {
@@ -43,6 +53,7 @@ void MatchSuccess::onStateDismounted(Device *FDN) {
     bufferTimer.invalidate();
     renderTimer.invalidate();
     toggleBlink = true;
+    FDN->getLightManager()->stopAnimation();
 }
 
 void MatchSuccess::renderSymbolScreen(Device *FDN) {

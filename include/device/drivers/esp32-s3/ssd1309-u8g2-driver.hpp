@@ -136,17 +136,27 @@ public:
     Display* whiteScreenLeftHalf() override {
         screen.setFontMode(0);
         screen.setDrawColor(1);
-        screen.drawBox(0, 0, screen.getDisplayWidth() / 2, screen.getDisplayHeight());
+        const u8g2_uint_t w = screen.getDisplayWidth();
+        const u8g2_uint_t h = screen.getDisplayHeight();
+        const u8g2_uint_t half = w / 2;
+        screen.drawBox(0, 0, half, h);
         return this;
     }
 
     Display* whiteScreenRightHalf() override {
         screen.setFontMode(0);
         screen.setDrawColor(1);
-        screen.drawBox(screen.getDisplayWidth() / 2, 0, screen.getDisplayWidth() / 2, screen.getDisplayHeight());
+        const u8g2_uint_t w = screen.getDisplayWidth();
+        const u8g2_uint_t h = screen.getDisplayHeight();
+        const u8g2_uint_t half = w / 2;
+        screen.drawBox(half, 0, w - half, h);
         return this;
     }
 
 private:
-    U8G2_SSD1309_128X64_NONAME2_F_4W_HW_SPI screen;
+    // NONAME0 vs NONAME2: u8g2's SSD1309 128x64 "NONAME2" build adds a +2 column address offset when
+    // blitting to the panel (u8x8: default_x_offset=2) for 132-px-wide internal RAM. Use NONAME0 when
+    // the FDN panel maps buffer column 0 to the left edge; NONAME2 otherwise—wrong choice shows a
+    // ghost/fixed column and wrong half-screen split.
+    U8G2_SSD1309_128X64_NONAME0_F_4W_HW_SPI screen;
 };

@@ -136,14 +136,20 @@ public:
     Display* whiteScreenLeftHalf() override {
         screen.setFontMode(0);
         screen.setDrawColor(1);
-        screen.drawBox(0, 0, screen.getDisplayWidth() / 2, screen.getDisplayHeight());
+        const u8g2_uint_t w = screen.getDisplayWidth();
+        const u8g2_uint_t h = screen.getDisplayHeight();
+        const u8g2_uint_t half = w / 2;
+        screen.drawBox(0, 0, half, h);
         return this;
     }
 
     Display* whiteScreenRightHalf() override {
         screen.setFontMode(0);
         screen.setDrawColor(1);
-        screen.drawBox(screen.getDisplayWidth() / 2, 0, screen.getDisplayWidth() / 2, screen.getDisplayHeight());
+        const u8g2_uint_t w = screen.getDisplayWidth();
+        const u8g2_uint_t h = screen.getDisplayHeight();
+        const u8g2_uint_t half = w / 2;
+        screen.drawBox(half, 0, w - half, h);
         return this;
     }
 

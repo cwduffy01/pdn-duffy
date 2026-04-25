@@ -58,6 +58,8 @@ public:
 
 private:
     void renderSymbolScreen(Device *FDN);
+    void updateMatchSideLights(Device* FDN, bool leftOn, bool rightOn);
+    void syncMatchSideLights(Device* FDN);
 
     bool transitionToSelectionState = false;
     bool transitionToMatchSuccessState = false;
@@ -71,6 +73,9 @@ private:
 
     bool leftConnected = false;
     bool rightConnected = false;
+    /// Cache for side LED updates (sent + official match; avoid re-applying every tick).
+    bool lastSideLightLeft_ = false;
+    bool lastSideLightRight_ = false;
     bool blinkToggle = true;
     bool symbolSentLeft = false;
     bool symbolSentRight = false;

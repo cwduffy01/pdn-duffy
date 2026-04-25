@@ -35,6 +35,9 @@ public:
     void setGlobalBrightness(uint8_t brightness);
     
     void clear();
+
+    /// Stops the current animation and shows one static frame (e.g. symbol-idle connection halves).
+    void setStaticLedState(const LEDState& state);
     
     // Animation state query
     bool isAnimating() const;

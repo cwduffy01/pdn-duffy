@@ -4,8 +4,8 @@
 #include "device/animation/countdown-animation.hpp"
 #include "device/animation/vertical-chase-animation.hpp"
 #include "device/animation/transmit-breath-animation.hpp"
-// #include "device/animation/hunter-win-animation.hpp"
-// #include "device/animation/bounty-win-animation.hpp"
+#include "device/animation/hunter-win-animation.hpp"
+#include "device/animation/bounty-win-animation.hpp"
 #include "device/animation/lose-animation.hpp"
 #include "device/animation/main-menu-animation.hpp"
 #include "device/animation/player-detected-animation.hpp"
@@ -59,10 +59,10 @@ void LightManager::startAnimation(AnimationConfig config) {
             currentAnimation = new LoseAnimation();
             break;
         case AnimationType::HUNTER_WIN:
-            // currentAnimation = new HunterWinAnimation();
+            currentAnimation = new HunterWinAnimation();
             break;
         case AnimationType::BOUNTY_WIN:
-            // currentAnimation = new BountyWinAnimation();
+            currentAnimation = new BountyWinAnimation();
             break;
         case AnimationType::TRANSMIT_BREATH:
             currentAnimation = new TransmitBreathAnimation();
@@ -105,6 +105,14 @@ void LightManager::resumeAnimation() {
 
 void LightManager::clear() {
     applyLEDState(LEDState());
+}
+
+void LightManager::setStaticLedState(const LEDState& state) {
+    if (currentAnimation) {
+        delete currentAnimation;
+        currentAnimation = nullptr;
+    }
+    applyLEDState(state);
 }
 
 void LightManager::setGlobalBrightness(uint8_t brightness) {

@@ -2,10 +2,45 @@
 
 #include "device/remote-device-coordinator.hpp"
 #include "apps/symbol-match/symbol-match-states.hpp"
+#include "symbol.hpp"
 #include "device/device.hpp"
+#include "device/drivers/light-interface.hpp"
 #include "device/drivers/logger.hpp"
 
 static const char* TAG = "SymbolMatch";
+
+namespace {
+constexpr uint8_t kRecessCount = 22;  // numRecessLights; physical indices 0–21
+
+/// Recess halves (logical 0–10 / 11–21) with a +2 index shift. Fin: cross to the other physical half —
+/// a left jack match lights 4–8, a right jack match lights 0–3 (so the visible fin side matches the
+/// opposite edge from the old straight mapping).
+LEDState makeMatchSideHalves(const bool leftOn, const bool rightOn) {
+    LEDState s;
+    s.clear();
+    constexpr LEDColor c(100, 160, 255);
+    constexpr uint8_t bright = 90;
+    if (leftOn) {
+        for (uint8_t l = 0; l < 11; ++l) {
+            const uint8_t phys = (l + 2U) % kRecessCount;
+            s.setRecessLight(phys, c, bright);
+        }
+        for (uint8_t i = 4; i < 9; ++i) {
+            s.setFinLight(i, c, bright);
+        }
+    }
+    if (rightOn) {
+        for (uint8_t l = 11; l < 22; ++l) {
+            const uint8_t phys = (l + 2U) % kRecessCount;
+            s.setRecessLight(phys, c, bright);
+        }
+        for (uint8_t i = 0; i < 4; ++i) {
+            s.setFinLight(i, c, bright);
+        }
+    }
+    return s;
+}
+}  // namespace
 
 SymbolIdle::SymbolIdle(SymbolManager* symbolManager, RemoteDeviceCoordinator* remoteDeviceCoordinator,
                        SymbolWirelessManager* symbolWirelessManager)
@@ -30,9 +65,11 @@ void SymbolIdle::onStateMounted(Device *FDN) {
             return;
         }
 
-        symbolManager->setLeftMatched(true);
+        const SymbolId local = symbolManager->getSymbol(SerialIdentifier::INPUT_JACK)->getSymbolId();
+        symbolManager->setLeftOfficiallyMatched(command.symbolId == local);
         if (mountedFdn != nullptr) {
             renderSymbolScreen(mountedFdn);
+            syncMatchSideLights(mountedFdn);
         }
     }, SerialIdentifier::INPUT_JACK);
 
@@ -41,9 +78,11 @@ void SymbolIdle::onStateMounted(Device *FDN) {
             return;
         }
 
-        symbolManager->setRightMatched(true);
+        const SymbolId local = symbolManager->getSymbol(SerialIdentifier::INPUT_JACK_SECONDARY)->getSymbolId();
+        symbolManager->setRightOfficiallyMatched(command.symbolId == local);
         if (mountedFdn != nullptr) {
             renderSymbolScreen(mountedFdn);
+            syncMatchSideLights(mountedFdn);
         }
     }, SerialIdentifier::INPUT_JACK_SECONDARY);
 
@@ -59,7 +98,14 @@ void SymbolIdle::onStateMounted(Device *FDN) {
             }
         }
     }
-    
+
+    leftConnected = remoteDeviceCoordinator->getPortStatus(SerialIdentifier::INPUT_JACK) == PortStatus::CONNECTED;
+    rightConnected = remoteDeviceCoordinator->getPortStatus(SerialIdentifier::INPUT_JACK_SECONDARY) == PortStatus::CONNECTED;
+    const bool leftLeds = symbolManager->isLeftOfficiallyMatched() && symbolSentLeft;
+    const bool rightLeds = symbolManager->isRightOfficiallyMatched() && symbolSentRight;
+    lastSideLightLeft_ = leftLeds;
+    lastSideLightRight_ = rightLeds;
+    updateMatchSideLights(FDN, leftLeds, rightLeds);
 }
 
 void SymbolIdle::onStateLoop(Device *FDN) {
@@ -73,12 +119,18 @@ void SymbolIdle::onStateLoop(Device *FDN) {
     rightConnected = remoteDeviceCoordinator->getPortStatus(SerialIdentifier::INPUT_JACK_SECONDARY) == PortStatus::CONNECTED;
 
     if (!leftConnected) {
-        symbolManager->setLeftMatched(false);
-        renderSymbolScreen(mountedFdn);
+        symbolManager->setLeftOfficiallyMatched(false);
+        if (mountedFdn != nullptr) {
+            renderSymbolScreen(mountedFdn);
+            syncMatchSideLights(mountedFdn);
+        }
     }
     if (!rightConnected) {
-        symbolManager->setRightMatched(false);
-        renderSymbolScreen(mountedFdn);
+        symbolManager->setRightOfficiallyMatched(false);
+        if (mountedFdn != nullptr) {
+            renderSymbolScreen(mountedFdn);
+            syncMatchSideLights(mountedFdn);
+        }
     }
 
     if (!symbolSentLeft && leftConnected) {
@@ -115,6 +167,8 @@ void SymbolIdle::onStateLoop(Device *FDN) {
             blinkToggle = !blinkToggle;
         }
     }
+
+    syncMatchSideLights(FDN);
 }
 
 void SymbolIdle::onStateDismounted(Device *FDN) {
@@ -126,8 +180,8 @@ void SymbolIdle::onStateDismounted(Device *FDN) {
 
     symbolWirelessManager->clearCallback();
 
-    symbolManager->setLeftMatched(false);
-    symbolManager->setRightMatched(false);
+    symbolManager->setLeftOfficiallyMatched(false);
+    symbolManager->setRightOfficiallyMatched(false);
 
     for (SerialIdentifier port : {SerialIdentifier::INPUT_JACK_SECONDARY, SerialIdentifier::INPUT_JACK}) {
         const uint8_t* peerMac = remoteDeviceCoordinator->getPeerMac(port);
@@ -138,28 +192,43 @@ void SymbolIdle::onStateDismounted(Device *FDN) {
     }
 
     transitionToMainMenuApp = false;
+    FDN->getLightManager()->stopAnimation();
+}
+
+void SymbolIdle::updateMatchSideLights(Device* FDN, const bool leftOn, const bool rightOn) {
+    FDN->getLightManager()->setStaticLedState(makeMatchSideHalves(leftOn, rightOn));
+}
+
+void SymbolIdle::syncMatchSideLights(Device* FDN) {
+    const bool l = symbolManager->isLeftOfficiallyMatched() && symbolSentLeft;
+    const bool r = symbolManager->isRightOfficiallyMatched() && symbolSentRight;
+    if (l != lastSideLightLeft_ || r != lastSideLightRight_) {
+        lastSideLightLeft_ = l;
+        lastSideLightRight_ = r;
+        updateMatchSideLights(FDN, l, r);
+    }
 }
 
 void SymbolIdle::renderSymbolScreen(Device *FDN) {
     FDN->getDisplay()->invalidateScreen();
 
     // render symbol glyphs
-    if (symbolManager->isLeftMatched()) {
+    if (symbolManager->isLeftOfficiallyMatched()) {
         FDN->getDisplay()->whiteScreenLeftHalf();
     }
 
-    if (symbolManager->isRightMatched()) {
+    if (symbolManager->isRightOfficiallyMatched()) {
         FDN->getDisplay()->whiteScreenRightHalf();
     }
 
     // Half-screen fills reset draw color / font mode; SYMBOL_GLYPH uses XOR (draw color 2) + transparent font
     FDN->getDisplay()->setGlyphMode(FontMode::SYMBOL_GLYPH);
 
-    if (symbolManager->isLeftMatched() || !leftConnected || blinkToggle) {
+    if (symbolManager->isLeftOfficiallyMatched() || !leftConnected || blinkToggle) {
         FDN->getDisplay()->renderGlyph(symbolManager->getSymbolGlyph(SerialIdentifier::INPUT_JACK), 24, 40);
     } 
 
-    if (symbolManager->isRightMatched() || !rightConnected || blinkToggle) {
+    if (symbolManager->isRightOfficiallyMatched() || !rightConnected || blinkToggle) {
         FDN->getDisplay()->renderGlyph(symbolManager->getSymbolGlyph(SerialIdentifier::INPUT_JACK_SECONDARY), 72, 40);
     }
 
@@ -182,7 +251,8 @@ bool SymbolIdle::transitionToSelection() {
 }
 
 bool SymbolIdle::transitionToMatchSuccess() {
-    return symbolManager->isLeftMatched() && symbolManager->isRightMatched();
+    return symbolManager->isLeftOfficiallyMatched() && symbolManager->isRightOfficiallyMatched() && symbolSentLeft
+        && symbolSentRight;
 }
 
 bool SymbolIdle::transitionToMainMenu() {
